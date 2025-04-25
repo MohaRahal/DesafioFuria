@@ -1,0 +1,238 @@
+:root {
+  --furia-black: #000;
+  --furia-white: #fff;
+  --furia-dark-gray: #222;
+  --furia-light-gray: #f2f2f2;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background-color: var(--furia-black);
+  color: var(--furia-white);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.header {
+  background-color: var(--furia-dark-gray);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 2px solid var(--furia-white);
+  position: relative;
+}
+
+.logo-container {
+  position: absolute;
+  left: 20px;
+}
+
+.logo-img {
+  height: 30px;
+  width: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.logo-img img {
+  width: 100%;
+  height: 100%;
+  left: 20px;
+  object-fit: cover;
+  align-items: center;
+  justify-content: center;
+}
+
+.title {
+  font-weight: bold;
+  font-size: 24px;
+  color: var(--furia-white);
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.user-info {
+  position: absolute;
+  right: 20px;
+}
+
+.main-container {
+  display: flex;
+  height: calc(100vh - 64px);
+}
+
+.sidebar {
+  width: 180px;
+  background-color: var(--furia-dark-gray);
+  padding: 20px 10px;
+  border-right: 1px solid #333;
+}
+
+.typing-indicator {
+  display: flex;
+  padding: 5px 0;
+}
+
+.typing-indicator span {
+  height: 8px;
+  width: 8px;
+  background-color: var(--furia-white);
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 5px;
+  animation: bounce 1.5s infinite ease-in-out;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes bounce {
+  0%, 60%, 100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-5px);
+  }
+}
+
+.menu-item {
+  padding: 12px 15px;
+  border-radius: 5px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.menu-item:hover {
+  background-color: #333;
+  color: var(--furia-white);
+}
+
+.menu-item.active {
+  background-color: #333;
+  color: var(--furia-white);
+  border-left: 3px solid var(--furia-white);
+}
+
+.chat-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url('https://cdn.dribbble.com/userupload/11627400/file/still-500c8d964bf177ef735203e3e3804ac2.gif') center/cover;
+  opacity: 0.7; /* Reduz a opacidade para melhor legibilidade */
+  z-index: -1; /* Coloca atrás do conteúdo */
+}
+.chat-container {
+  position: relative; /* Necessário para posicionar o fundo */
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden; /* Impede que o GIF vaze */
+}
+
+.chat-messages {
+  flex-grow: 1;
+  padding: 20px;
+  overflow-y: auto;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.message {
+  margin-bottom: 15px;
+  max-width: 80%;
+  display: flex;
+  flex-direction: column;
+}
+
+.message.user {
+  align-self: flex-end;
+  align-items: flex-end;
+  margin-left: auto;
+}
+
+.message.bot {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+
+.message-content {
+  padding: 10px 15px;
+  border-radius: 10px;
+}
+
+.message.user .message-content {
+  background-color: var(--furia-white);
+  color: var(--furia-black);
+}
+
+.message.bot .message-content {
+  background-color: var(--furia-dark-gray);
+  color: var(--furia-white);
+}
+
+.sender {
+  font-size: 12px;
+  margin-bottom: 4px;
+  color: #aaa;
+}
+
+.chat-input {
+  padding: 15px;
+  background-color: var(--furia-dark-gray);
+  display: flex;
+  border-top: 1px solid #333;
+}
+
+#message-input {
+  flex-grow: 1;
+  padding: 12px 15px;
+  border: none;
+  border-radius: 20px;
+  background-color: #333;
+  color: var(--furia-white);
+  outline: none;
+}
+
+#send-button {
+  margin-left: 10px;
+  padding: 0 20px;
+  background-color: var(--furia-white);
+  color: var(--furia-black);
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+
+/* Responsividade para mobile */
+@media (max-width: 768px) {
+  .sidebar {
+    display: none;
+  }
+  
+  .title {
+    font-size: 18px;
+  }
+}

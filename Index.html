@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FURIA FAN Chat</title>
+  <link rel="icon" href="assets/favicon.ico">
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js"></script>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">
+        <img src="https://furiagg.fbitsstatic.net/sf/img/logo-furia.svg?theme=main&v=202503171541" 
+        alt="Logo da Furia" width="88" height="32" fetchpriority="high" style="filter: invert(100%);">
+    </div>   
+    <div class="user-info">Mohamed Rahal</div>
+  </div>
+  <div class="main-container">
+    <div class="sidebar">
+        <div class="menu-item active">Chat</div>
+        <div class="menu-item" onclick="location.href='https://www.hltv.org/team/8297/furia#tab-matchesBox'">Próximos Jogos</div>
+        <div class="menu-item" onclick="location.href='https://www.furia.gg/'">Loja</div>
+        <div class="menu-item" onclick="location.href='https://github.com/MohaRahal'">Suporte</div>
+    </div>  
+    <div class="chat-container">
+      <div class="chat-bg"></div>     
+      <div class="chat-messages" id="chat-messages">
+        <div class="message bot">
+          <div class="sender">FURIA Bot</div>
+          <div class="message-content">
+            Fala Furioso(a)! Sou o assistente oficial da FURIA. Como posso ajudar você hoje?
+          </div>
+        </div>
+      </div>
+      
+      <div class="chat-input">
+        <input type="text" id="message-input" placeholder="Digite sua mensagem...">
+        <button id="send-button">Enviar</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
