@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', function() {
           chatMessages.scrollTop = chatMessages.scrollHeight;
 
           // Faz uma requisição POST para o backend (no servidor local)
-          const response = await fetch('http://localhost:3000/api/chat', {
+          const response = await fetch('https://desafiofuria-production.up.railway.app/api/chat', {
               method: 'POST',
               headers: {
                   'Content-Type': 'application/json',
