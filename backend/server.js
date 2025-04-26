@@ -19,7 +19,7 @@ const chatHistories = {}; // { sessionId: [mensagens anteriores] }
 
 // Função para rodar o script Python e obter a line-up da FURIA
 const getFuriaLineup = (callback) => {
-  exec('python3 get_furia_lineup.py', (error, stdout, stderr) => {
+  exec('python3 get_lineup.py', (error, stdout, stderr) => {
     if (error) {
       console.error(`exec error: ${error}`);
       callback("Erro ao consultar a line-up da FURIA!");
