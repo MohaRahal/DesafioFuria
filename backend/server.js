@@ -1,8 +1,9 @@
+// Importa as bibliotecas necessárias
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
-const { exec } = require('child_process');  // Para executar o script Python
 
+// Cria uma instância do aplicativo Express
 const app = express();
 
 // Define a porta que o servidor vai usar
@@ -16,31 +17,6 @@ app.use(express.json());
 
 // Objeto para armazenar o histórico de mensagens para cada sessão
 const chatHistories = {}; // { sessionId: [mensagens anteriores] }
-
-// Função para rodar o script Python e obter a line-up da FURIA
-const getFuriaLineup = (callback) => {
-  exec('python3 get_lineup.py', (error, stdout, stderr) => {
-    if (error) {
-      console.error(`exec error: ${error}`);
-      callback("Erro ao consultar a line-up da FURIA!");
-      return;
-    }
-    if (stderr) {
-      console.error(`stderr: ${stderr}`);
-      callback("Erro ao consultar a line-up da FURIA!");
-      return;
-    }
-
-    // Parseia a resposta do Python e a envia de volta
-    const result = JSON.parse(stdout);
-    if (result.lineup) {
-      const players = result.lineup.join(', ');
-      callback(`A line-up atual da FURIA é: ${players}`);
-    } else {
-      callback("Erro ao pegar a line-up!");
-    }
-  });
-};
 
 // Define a rota principal para o chat
 app.post('/api/chat', async (req, res) => {
@@ -62,7 +38,7 @@ app.post('/api/chat', async (req, res) => {
           {
             text: `Você é um assistente virtual oficial da FURIA Esports. 
             Seja alegre, brinque com o fã chamando ele de FURIOSO às vezes.
-            Seja direto também, sem mensagens longas.
+            Seja direto tambem sem mensagens longas.
             Você é especialista em esports e pode responder sobre o elenco da FURIA em CS2, LoL, Rocket League, Rainbow Six Siege e outros.
             Sempre responda de forma divertida e traga informações relevantes sobre a FURIA.`
           }
@@ -78,61 +54,44 @@ app.post('/api/chat', async (req, res) => {
   });
 
   try {
-    // Verifica se a mensagem do usuário está relacionada ao elenco da FURIA
-    if (
-      userMessage.toLowerCase().includes("line-up") || 
-      userMessage.toLowerCase().includes("jogadores") || 
-      userMessage.toLowerCase().includes("escalação") || 
-      userMessage.toLowerCase().includes("elenco")
-    ) {
-      // Se for sobre line-up, chama o Python para pegar a line-up da FURIA
-      getFuriaLineup((response) => {
-        chatHistories[sessionId].push({
-          role: "model",
-          parts: [{ text: response }]
-        });
-        return res.json({ message: response });
-      });
-    } else {
-      // Se a mensagem não for sobre a FURIA, envia para a API do Gemini
-      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${apiKey}`;
+    // URL da API do Gemini com a chave de API
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${apiKey}`;
 
-      // Corpo da requisição para a API do Gemini
-      const requestBody = {
-        contents: chatHistories[sessionId], // Histórico de mensagens
-        generationConfig: {
-          temperature: 0.7, // Grau de criatividade da resposta
-          maxOutputTokens: 500, // Quantidade máxima de tokens (palavras/frases)
-          topP: 0.9 // Controle de diversidade das respostas
-        },
-        safetySettings: [
-          {
-            category: "HARM_CATEGORY_HARASSMENT",
-            threshold: "BLOCK_ONLY_HIGH" // Bloqueia apenas assédio grave
-          }
-        ]
-      };
-
-      // Faz a requisição POST para o Gemini
-      const response = await axios.post(apiUrl, requestBody, {
-        headers: {
-          'Content-Type': 'application/json'
+    // Corpo da requisição que será enviado para o Gemini
+    const requestBody = {
+      contents: chatHistories[sessionId], // Histórico de mensagens
+      generationConfig: {
+        temperature: 0.7, // Grau de criatividade da resposta
+        maxOutputTokens: 500, // Quantidade máxima de tokens (palavras/frases)
+        topP: 0.9 // Controle de diversidade das respostas
+      },
+      safetySettings: [
+        {
+          category: "HARM_CATEGORY_HARASSMENT",
+          threshold: "BLOCK_ONLY_HIGH" // Bloqueia apenas assédio grave
         }
-      });
+      ]
+    };
 
-      // Extrai a resposta do bot da resposta recebida
-      const botReply = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || 
-        "Não consegui gerar uma resposta no momento. Pergunte algo sobre o elenco da FURIA!";
+    // Faz a requisição POST para o Gemini
+    const response = await axios.post(apiUrl, requestBody, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
 
-      // Adiciona a resposta do bot no histórico da sessão
-      chatHistories[sessionId].push({
-        role: "model",
-        parts: [{ text: botReply }]
-      });
+    // Extrai a resposta do bot da resposta recebida
+    const botReply = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || 
+      "Não consegui gerar uma resposta no momento. Pergunte algo sobre o elenco da FURIA!";
 
-      // Retorna a resposta do bot para o front-end
-      res.json({ message: botReply });
-    }
+    // Adiciona a resposta do bot no histórico da sessão
+    chatHistories[sessionId].push({
+      role: "model",
+      parts: [{ text: botReply }]
+    });
+
+    // Retorna a resposta do bot para o front-end
+    res.json({ message: botReply });
 
   } catch (error) {
     // Se houver erro, loga informações detalhadas no console
@@ -161,3 +120,4 @@ app.post('/api/reset', (req, res) => {
 app.listen(port, () => {
   console.log(`Servidor rodando na porta ${port}`);
 });
+
