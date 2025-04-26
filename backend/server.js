@@ -26,7 +26,7 @@ const teamId = 8297; // ID da FURIA no HLTV
 const getFuriaLineUp = async () => {
   try {
     // Endpoint para pegar informações sobre os jogadores do time
-    const response = await axios.get(`${hltvApiUrl}/team/${teamId}/players.json`);
+    const response = await axios.get(`${hltvApiUrl}/teams/${teamId}`);
     
     // Processar a resposta para obter os nomes dos jogadores
     const players = response.data.players.map(player => player.name);
