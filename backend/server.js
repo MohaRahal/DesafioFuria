@@ -102,26 +102,42 @@ app.post('/api/chat', async (req, res) => {
 
 // Função para pegar os streamers ao vivo da FURIA
 async function getStreamersLive() {
-  const accessToken = await getTwitchAccessToken();
-  const url = 'https://api.twitch.tv/helix/streams';
-  const headers = {
-    'Client-ID': process.env.TWITCH_CLIENT_ID,
-    'Authorization': `Bearer ${accessToken}`
-  };
-  const params = {
-    'team': 'furia'
-  };
-
   try {
-    const response = await axios.get(url, { headers, params });
+    // Passo 1: Obter membros da equipe FURIA
+    const teamResp = await axios.get(
+      'https://api.twitch.tv/kraken/teams/furia',
+      { headers: { 'Client-ID': process.env.TWITCH_CLIENT_ID, 'Accept': 'application/vnd.twitchtv.v5+json' } }
+    );
+    const members = teamResp.data.users.map(u => u.name);  // são os logins
 
-    if (response.data.data.length > 0) {
-      return response.data.data.map(stream => stream.user_name).join(', ');
-    } else {
-      return 'Nenhum streamer da FURIA está ao vivo no momento.';
+    if (members.length === 0) {
+      return 'Não encontrei membros cadastrados na Team FURIA.';
     }
+
+    // Passo 2: Verificar quais membros estão online
+    const params = new URLSearchParams();
+    members.forEach(login => params.append('user_login', login));
+
+    const streamsResp = await axios.get(
+      'https://api.twitch.tv/helix/streams',
+      { 
+        headers: { 
+          'Client-ID': process.env.TWITCH_CLIENT_ID, 
+          'Authorization': `Bearer ${await getTwitchAccessToken()}` 
+        },
+        params
+      }
+    );
+    const liveStreams = streamsResp.data.data;
+
+    if (liveStreams.length === 0) {
+      return 'Nenhum streamer da Team FURIA está ao vivo no momento.';
+    }
+
+    return liveStreams.map(s => s.user_login).join(', ');
+
   } catch (error) {
-    console.error('Erro ao buscar streamers da FURIA:', error);
+    console.error('Erro ao buscar streamers ao vivo:', error);
     return 'Erro ao buscar streamers da FURIA.';
   }
 }
