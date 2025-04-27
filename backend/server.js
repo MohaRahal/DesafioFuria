@@ -122,8 +122,8 @@ async function getTwitchAccessToken() {
 
   try {
     // Credenciais da Twitch (idealmente armazenadas como variáveis de ambiente)
-    const clientId = process.env.TWITCH_CLIENT_ID;
-    const clientSecret = process.env.TWITCH_CLIENT_SECRET;
+    const clientId = irqrpftbthlz0yh483m8908gqk9cxo;
+    const clientSecret = mq19phdohb2hj5jvgnwokec5qechdk;
 
     if (!clientId || !clientSecret) {
       throw new Error('Credenciais da Twitch não configuradas');

@@ -6,18 +6,11 @@
   <title>FURIA FAN Chat</title>
   <link rel="icon" href="assets/favicon.ico">
   <link rel="stylesheet" href="style.css">
+  <script src="script.js"></script>
+  <!-- Adicionando o script para os streamers -->
+  <script src="streamers.js"></script>
   <style>
-    /* Estilos adicionais para a seção de streamers */
-    .content-container {
-      display: none;
-      height: 100%;
-      overflow-y: auto;
-    }
-    
-    .content-container.active {
-      display: block;
-    }
-    
+    /* Estilos para a seção de streamers */
     .streamers-container {
       display: flex;
       flex-wrap: wrap;
@@ -28,28 +21,22 @@
     
     .streamer-card {
       width: 280px;
-      background-color: #1a1a1a;
+      background-color: #1c1c1c;
       border-radius: 8px;
       overflow: hidden;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
       transition: transform 0.2s;
-      cursor: pointer;
     }
     
     .streamer-card:hover {
       transform: translateY(-5px);
     }
     
-    .thumbnail-container {
-      position: relative;
-      width: 100%;
-      height: 157px;
-    }
-    
     .thumbnail {
       width: 100%;
-      height: 100%;
+      height: 157px;
       object-fit: cover;
+      position: relative;
     }
     
     .live-indicator {
@@ -83,25 +70,15 @@
       font-weight: bold;
       margin-bottom: 5px;
       color: white;
-      display: flex;
-      align-items: center;
-    }
-    
-    .streamer-avatar {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      margin-right: 8px;
     }
     
     .stream-title {
       color: #b8b8b8;
       font-size: 14px;
       margin-bottom: 10px;
+      white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      display: -webkit-box;
-      -webkit-box-orient: vertical;
     }
     
     .game-name {
@@ -116,19 +93,23 @@
       font-size: 18px;
       width: 100%;
     }
-    
+
+    .content-container {
+      display: none;
+      height: 100%;
+      overflow-y: auto;
+    }
+
+    .content-container.active {
+      display: block;
+    }
+
     .loading {
       text-align: center;
       padding: 40px;
       color: white;
     }
-    
-    /* Ajustes para os itens de menu */
-    .menu-item {
-      cursor: pointer;
-    }
   </style>
-  <script src="script.js"></script>
 </head>
 <body>
   <div class="header">
@@ -141,7 +122,7 @@
   
   <div class="main-container">
     <div class="sidebar">
-      <div class="menu-item active" id="chat-tab">Chat</div>
+      <div class="menu-item" id="chat-tab">Chat</div>
       <div class="menu-item" id="streamers-tab">Streamers Ao Vivo</div>
       <div class="menu-item" onclick="location.href='https://www.hltv.org/team/8297/furia#tab-matchesBox'">Próximos Jogos</div>
       <div class="menu-item" onclick="location.href='https://www.furia.gg/'">Loja</div>
@@ -169,145 +150,10 @@
     
     <div class="content-container" id="streamers-content">
       <div class="loading" id="streamers-loading">
-        Carregando streamers da FURIA...
+        Carregando streamers...
       </div>
       <div class="streamers-container" id="streamers-container"></div>
     </div>
   </div>
-
-  <script>
-    // Código para gerenciar as abas e carregar streamers
-    document.addEventListener('DOMContentLoaded', function() {
-      // Elementos da interface
-      const chatTab = document.getElementById('chat-tab');
-      const streamersTab = document.getElementById('streamers-tab');
-      const chatContent = document.getElementById('chat-content');
-      const streamersContent = document.getElementById('streamers-content');
-      const streamersContainer = document.getElementById('streamers-container');
-      const loadingElement = document.getElementById('streamers-loading');
-      
-      // Flag para controlar se já carregamos os streamers
-      let streamersLoaded = false;
-      
-      // Função para alternar entre as abas
-      function switchTab(tab) {
-        // Remove a classe active de todas as abas
-        document.querySelectorAll('.menu-item').forEach(item => {
-          item.classList.remove('active');
-        });
-        
-        // Remove a classe active de todos os conteúdos
-        document.querySelectorAll('.content-container').forEach(content => {
-          content.classList.remove('active');
-        });
-        
-        // Adiciona a classe active na aba selecionada
-        tab.classList.add('active');
-        
-        // Ativa o conteúdo correspondente
-        if (tab === chatTab) {
-          chatContent.classList.add('active');
-        } else if (tab === streamersTab) {
-          streamersContent.classList.add('active');
-          
-          // Carrega os streamers se ainda não foram carregados
-          if (!streamersLoaded) {
-            loadStreamers();
-            streamersLoaded = true;
-          }
-        }
-      }
-      
-      // Eventos de clique nas abas
-      chatTab.addEventListener('click', function() {
-        switchTab(chatTab);
-      });
-      
-      streamersTab.addEventListener('click', function() {
-        switchTab(streamersTab);
-      });
-      
-      // Função para carregar os streamers da FURIA
-      async function loadStreamers() {
-        try {
-          loadingElement.style.display = 'block';
-          streamersContainer.innerHTML = '';
-          
-          // Faz a requisição para o backend
-          const response = await fetch('/api/furia-streamers');
-          
-          if (!response.ok) {
-            throw new Error('Falha ao buscar os streamers');
-          }
-          
-          const data = await response.json();
-          
-          // Esconde o loading
-          loadingElement.style.display = 'none';
-          
-          // Se não houver streamers online
-          if (!data.streamers || data.streamers.length === 0) {
-            streamersContainer.innerHTML = `
-              <div class="no-streamers">
-                Nenhum streamer da FURIA está ao vivo no momento.
-              </div>
-            `;
-            return;
-          }
-          
-          // Para cada streamer, cria um card
-          data.streamers.forEach(streamer => {
-            const streamerCard = document.createElement('div');
-            streamerCard.className = 'streamer-card';
-            
-            // Formata o número de espectadores
-            const viewerCount = formatViewerCount(streamer.viewerCount);
-            
-            streamerCard.innerHTML = `
-              <div class="thumbnail-container">
-                <img src="${streamer.thumbnailUrl}" alt="${streamer.displayName}" class="thumbnail">
-                <div class="live-indicator">LIVE</div>
-                <div class="viewers">${viewerCount} espectadores</div>
-              </div>
-              <div class="streamer-info">
-                <div class="streamer-name">
-                  <img src="${streamer.profileImage}" alt="" class="streamer-avatar">
-                  ${streamer.displayName}
-                </div>
-                <div class="stream-title">${streamer.title}</div>
-                <div class="game-name">${streamer.gameName}</div>
-              </div>
-            `;
-            
-            // Adiciona evento de clique para abrir o canal do streamer
-            streamerCard.addEventListener('click', function() {
-              window.open(`https://twitch.tv/${streamer.login}`, '_blank');
-            });
-            
-            streamersContainer.appendChild(streamerCard);
-          });
-          
-        } catch (error) {
-          console.error('Erro ao carregar streamers:', error);
-          loadingElement.style.display = 'none';
-          streamersContainer.innerHTML = `
-            <div class="no-streamers">
-              Não foi possível carregar os streamers. Tente novamente mais tarde.
-            </div>
-          `;
-        }
-      }
-      
-      // Função para formatar o número de espectadores
-      function formatViewerCount(count) {
-        if (count >= 1000000) {
-          return (count / 1000000).toFixed(1) + 'M';
-        } else if (count >= 1000) {
-          return (count / 1000).toFixed(1) + 'K';
-        }
-        return count;
-      }
-    });
-  </script>
 </body>
 </html>
