@@ -109,13 +109,6 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-// (Opcional) Rota para resetar o histórico de uma sessão específica
-app.post('/api/reset', (req, res) => {
-  const sessionId = req.body.sessionId || 'default';
-  delete chatHistories[sessionId]; // Deleta o histórico da sessão
-  res.json({ message: 'Sessão resetada com sucesso.' });
-});
-
 // Inicia o servidor escutando na porta especificada
 app.listen(port, () => {
   console.log(`Servidor rodando na porta ${port}`);
