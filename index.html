@@ -6,7 +6,6 @@
   <title>FURIA FAN Chat</title>
   <link rel="icon" href="assets/favicon.ico">
   <link rel="stylesheet" href="style.css">
-  <script src="script.js"></script>
 </head>
 <body>
   <div class="header">
@@ -24,9 +23,8 @@
         <div class="menu-item" onclick="location.href='https://www.furia.gg/'">Loja</div>
         <div class="menu-item" onclick="location.href='https://github.com/MohaRahal'">Suporte</div>
         <!-- Nova aba para os streamers ao vivo -->
-        <div class="menu-item" onclick="getStreamersLive()">Streamers Ao Vivo</div>
+        <div class="menu-item" id="streamers-btn">Streamers Ao Vivo</div>
     </div>  
-    
     <div class="chat-container">
       <div class="chat-bg"></div>     
       <div class="chat-messages" id="chat-messages">
@@ -52,5 +50,6 @@
 
   </div>
 
+  <script src="script.js"></script>
 </body>
 </html>
