@@ -93,24 +93,45 @@ async function getTwitchAccessToken() {
 }
 
 // Função para pegar os streamers ao vivo da Team FURIA usando TEAM_MEMBERS
+// Função para obter o token de acesso da Twitch (Client Credentials)
+async function getTwitchAccessToken() {
+  const clientId = process.env.TWITCH_CLIENT_ID;
+  const clientSecret = process.env.TWITCH_CLIENT_SECRET;
+  
+  try {
+    const resp = await axios.post('https://id.twitch.tv/oauth2/token', null, {
+      params: { 
+        client_id: clientId, 
+        client_secret: clientSecret, 
+        grant_type: 'client_credentials' 
+      }
+    });
+    return resp.data.access_token;
+  } catch (error) {
+    console.error('Erro ao obter token de acesso da Twitch:', error.message);
+    throw new Error('Falha na autenticação com a Twitch');
+  }
+}
+
+// Função para pegar os streamers ao vivo da Team FURIA usando TEAM_MEMBERS
 async function getStreamersLive() {
   try {
-    // Busca membros da equipe FURIA via endpoint público não documentado
-    const clientId = process.env.TWITCH_CLIENT_ID;
-    const membersResp = await axios.get(
-      'https://api.twitch.tv/api/team/furia/members',
-      { params: { client_id: clientId } }
-    );
-    const members = membersResp.data.users.map(u => u.user_login || u.name);
+    // Usa a lista fixa de membros da FURIA definida no início
+    const members = TEAM_MEMBERS;
+    
     if (!members.length) {
       return 'Nenhum membro encontrado na Team FURIA.';
     }
 
-    // Checa quais desses membros estão ao vivo
+    // Obter token de acesso
     const token = await getTwitchAccessToken();
+    const clientId = process.env.TWITCH_CLIENT_ID;
+    
+    // Construir query params para a API
     const params = new URLSearchParams();
     members.forEach(login => params.append('user_login', login));
 
+    // Fazer requisição à API da Twitch para verificar streamers ao vivo
     const streamsResp = await axios.get('https://api.twitch.tv/helix/streams', {
       headers: {
         'Client-ID': clientId,
@@ -120,17 +141,21 @@ async function getStreamersLive() {
     });
 
     const live = streamsResp.data.data;
+    
     if (!live.length) {
       return 'Nenhum streamer da Team FURIA está ao vivo no momento.';
     }
 
-    return live.map(s => s.user_login).join(', ');
+    // Formatar uma resposta mais completa com nome do streamer, jogo e link
+    return live.map(stream => 
+      `${stream.user_name} (jogando ${stream.game_name}: https://twitch.tv/${stream.user_login})`
+    ).join(', ');
+    
   } catch (err) {
     console.error('Erro ao buscar streamers da FURIA:', err);
     return 'Erro ao buscar streamers da FURIA. Tente novamente mais tarde.';
   }
 }
-
 
 // Rota para resetar o histórico de uma sessão específica
 app.post('/api/reset', (req, res) => {
