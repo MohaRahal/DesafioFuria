@@ -109,8 +109,135 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
+// Variáveis para armazenar as credenciais e o token da Twitch
+let twitchAccessToken = null;
+let twitchTokenExpiry = null;
+
+// Função para obter ou renovar o token da Twitch
+async function getTwitchAccessToken() {
+  // Verifica se o token ainda é válido
+  if (twitchAccessToken && twitchTokenExpiry > Date.now()) {
+    return twitchAccessToken;
+  }
+
+  try {
+    // Credenciais da Twitch (idealmente armazenadas como variáveis de ambiente)
+    const clientId = process.env.TWITCH_CLIENT_ID;
+    const clientSecret = process.env.TWITCH_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
+      throw new Error('Credenciais da Twitch não configuradas');
+    }
+
+    // Faz a requisição para obter o token
+    const response = await axios.post(`https://id.twitch.tv/oauth2/token?client_id=${clientId}&client_secret=${clientSecret}&grant_type=client_credentials`);
+    
+    twitchAccessToken = response.data.access_token;
+    // Define a expiração do token (normalmente 60 dias, mas vamos usar um valor conservador)
+    twitchTokenExpiry = Date.now() + (response.data.expires_in * 1000) - 300000; // 5 minutos antes de expirar
+
+    return twitchAccessToken;
+  } catch (error) {
+    console.error('Erro ao obter token da Twitch:', error.message);
+    throw new Error('Não foi possível autenticar com a Twitch');
+  }
+}
+
+// Nova rota para buscar streamers da FURIA que estão ao vivo
+app.get('/api/furia-streamers', async (req, res) => {
+  try {
+    // Obtém o token de acesso da Twitch
+    const accessToken = await getTwitchAccessToken();
+    const clientId = process.env.TWITCH_CLIENT_ID;
+
+    // Primeiro, busca informações sobre o time FURIA
+    const teamResponse = await axios.get('https://api.twitch.tv/helix/teams?name=furia', {
+      headers: {
+        'Client-ID': clientId,
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
+
+    // Verifica se há dados do time
+    if (!teamResponse.data.data || teamResponse.data.data.length === 0) {
+      return res.json({ streamers: [] });
+    }
+
+    const teamData = teamResponse.data.data[0];
+    
+    // Extrai os IDs dos usuários do time
+    const userIds = teamData.users.map(user => user.user_id);
+    
+    // Obtém informações sobre quais streamers estão ao vivo
+    const streamsQuery = userIds.map(id => `user_id=${id}`).join('&');
+    const streamsResponse = await axios.get(`https://api.twitch.tv/helix/streams?${streamsQuery}`, {
+      headers: {
+        'Client-ID': clientId,
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
+
+    // Se não houver streamers online, retorna array vazio
+    if (!streamsResponse.data.data || streamsResponse.data.data.length === 0) {
+      return res.json({ streamers: [] });
+    }
+
+    // Coleta os IDs dos usuários que estão streamando para buscar mais informações
+    const liveUserIds = streamsResponse.data.data.map(stream => stream.user_id);
+    const usersQuery = liveUserIds.map(id => `id=${id}`).join('&');
+    
+    // Busca informações detalhadas dos usuários
+    const usersResponse = await axios.get(`https://api.twitch.tv/helix/users?${usersQuery}`, {
+      headers: {
+        'Client-ID': clientId,
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
+
+    // Combina as informações das streams com os detalhes dos usuários
+    const liveStreams = streamsResponse.data.data;
+    const usersData = usersResponse.data.data;
+
+    // Cria um mapa de IDs para facilitar a busca
+    const usersMap = {};
+    usersData.forEach(user => {
+      usersMap[user.id] = user;
+    });
+
+    // Formata os dados para enviar ao frontend
+    const streamers = liveStreams.map(stream => {
+      const user = usersMap[stream.user_id] || {};
+      
+      return {
+        id: stream.user_id,
+        login: stream.user_login,
+        username: stream.user_name,
+        displayName: user.display_name || stream.user_name,
+        profileImage: user.profile_image_url,
+        title: stream.title,
+        gameName: stream.game_name,
+        viewerCount: stream.viewer_count,
+        startedAt: stream.started_at,
+        thumbnailUrl: stream.thumbnail_url
+          .replace('{width}', '320')
+          .replace('{height}', '180')
+      };
+    });
+
+    res.json({ streamers });
+  } catch (error) {
+    console.error('Erro ao buscar streamers da FURIA:', error);
+    res.status(500).json({ 
+      error: 'Não foi possível obter informações dos streamers',
+      message: error.message
+    });
+  }
+});
+
+// Rota para servir o frontend
+app.use(express.static('public'));
+
 // Inicia o servidor escutando na porta especificada
 app.listen(port, () => {
   console.log(`Servidor rodando na porta ${port}`);
 });
-
