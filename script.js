@@ -1,149 +1,98 @@
+// Espera o carregamento completo da página antes de rodar o script
 document.addEventListener('DOMContentLoaded', function() {
-    // ------- Elementos para abas de chat e streamers -------
-    const chatTab = document.getElementById('chat-tab');
-    const streamersTab = document.getElementById('streamers-tab');
-    const chatContent = document.getElementById('chat-content');
-    const streamersContent = document.getElementById('streamers-content');
-    const streamersContainer = document.getElementById('streamers-container');
-    const loadingElement = document.getElementById('streamers-loading');
-    let streamersLoaded = false;
-  
-    // ------- Elementos para o chat -------
-    const chatMessages = document.getElementById('chat-messages');
-    const messageInput = document.getElementById('message-input');
-    const sendButton = document.getElementById('send-button');
-    const quickActions = document.querySelectorAll('.action-button');  // Caso utilize ações rápidas
-  
-    // Função para alternar entre abas
-    function switchTab(tab) {
-      document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
-      document.querySelectorAll('.content-container').forEach(content => content.classList.remove('active'));
-      tab.classList.add('active');
-      if (tab === chatTab) {
-        chatContent.classList.add('active');
-      } else if (tab === streamersTab) {
-        streamersContent.classList.add('active');
-        if (!streamersLoaded) {
-          loadStreamers();
-          streamersLoaded = true;
-        }
-      }
-    }
-  
-    // Evento de clique nas abas
-    chatTab.addEventListener('click', () => switchTab(chatTab));
-    streamersTab.addEventListener('click', () => switchTab(streamersTab));
-  
-    // Função para formatar número de espectadores
-    function formatViewerCount(count) {
-      if (count >= 1000000) return (count / 1000000).toFixed(1) + 'M';
-      if (count >= 1000) return (count / 1000).toFixed(1) + 'K';
-      return count;
-    }
-  
-    // Carrega streamers via API
-    async function loadStreamers() {
+    
+  // Pega os elementos do DOM (HTML) que vamos manipular
+  const chatMessages = document.getElementById('chat-messages'); // Área onde aparecem as mensagens
+  const messageInput = document.getElementById('message-input'); // Campo de digitar a mensagem
+  const sendButton = document.getElementById('send-button');     // Botão de enviar mensagem
+  const quickActions = document.querySelectorAll('.action-button'); // Botões de ação rápida (não usados nesse trecho)
+
+  // Função para adicionar uma mensagem no chat (pode ser do usuário ou do bot)
+  function addMessage(content, isUser = false) {
+      const messageDiv = document.createElement('div'); // Cria o container da mensagem
+      messageDiv.className = `message ${isUser ? 'user' : 'bot'}`; // Define a classe (user ou bot)
+
+      const senderDiv = document.createElement('div'); // Cria o elemento para o nome de quem enviou
+      senderDiv.className = 'sender';
+      senderDiv.textContent = isUser ? 'Você' : 'FURIA Bot'; // Define o nome de acordo com quem enviou
+
+      const contentDiv = document.createElement('div'); // Cria o elemento para o conteúdo da mensagem
+      contentDiv.className = 'message-content';
+      contentDiv.textContent = content; // Coloca o texto da mensagem
+
+      // Monta a mensagem no chat
+      messageDiv.appendChild(senderDiv);
+      messageDiv.appendChild(contentDiv);
+      
+      chatMessages.appendChild(messageDiv); // Adiciona no final da área de chat
+      chatMessages.scrollTop = chatMessages.scrollHeight; // Faz o chat rolar automaticamente pra baixo
+  }
+
+  // Função para enviar a mensagem para o servidor e receber a resposta
+  async function processMessage(message) {
       try {
-        loadingElement.style.display = 'block';
-        streamersContainer.innerHTML = '';
-  
-        const response = await fetch('/api/furia-streamers');
-        if (!response.ok) throw new Error('Falha ao buscar os streamers');
-        const data = await response.json();
-  
-        loadingElement.style.display = 'none';
-        if (!data.streamers || data.streamers.length === 0) {
-          streamersContainer.innerHTML = '<div class="no-streamers">Nenhum streamer da FURIA está ao vivo no momento.</div>';
-          return;
-        }
-  
-        data.streamers.forEach(streamer => {
-          const card = document.createElement('div');
-          card.className = 'streamer-card';
-          const viewers = formatViewerCount(streamer.viewerCount);
-          card.innerHTML = `
-            <div class="thumbnail-container">
-              <img src="${streamer.thumbnailUrl}" alt="${streamer.displayName}" class="thumbnail">
-              <div class="live-indicator">LIVE</div>
-              <div class="viewers">${viewers} espectadores</div>
-            </div>
-            <div class="streamer-info">
-              <div class="streamer-name">
-                <img src="${streamer.profileImage}" alt="" class="streamer-avatar">
-                ${streamer.displayName}
-              </div>
-              <div class="stream-title">${streamer.title}</div>
-              <div class="game-name">${streamer.gameName}</div>
-            </div>
-          `;
-          card.addEventListener('click', () => window.open(`https://twitch.tv/${streamer.login}`, '_blank'));
-          streamersContainer.appendChild(card);
-        });
-  
-      } catch (err) {
-        console.error('Erro ao carregar streamers:', err);
-        loadingElement.style.display = 'none';
-        streamersContainer.innerHTML = '<div class="no-streamers">Não foi possível carregar os streamers. Tente novamente mais tarde.</div>';
+          // Mostra um indicador de "digitando... do bot"
+          // Isso é só uma animação, não tem interação com o servidor
+          const typingIndicator = document.createElement('div');
+          typingIndicator.className = 'message bot typing';
+          typingIndicator.innerHTML = `
+              <div class="sender">FURIA Bot</div>
+              <div class="message-content">
+                  <div class="typing-indicator">
+                      <span></span><span></span><span></span>
+                  </div>
+              </div>`;
+          chatMessages.appendChild(typingIndicator);
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+
+          // Faz uma requisição POST para o backend (no servidor local)
+          const response = await fetch('https://desafiofuria-production.up.railway.app/api/chat', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ message }) // Envia a mensagem no formato JSON
+          });
+
+          // Remove o indicador de "digitando..." após receber a resposta
+          chatMessages.removeChild(typingIndicator);
+
+          // Se a resposta não for OK (erro no servidor)
+          if (!response.ok) {
+              throw new Error('Erro na comunicação com o servidor');
+          }
+
+          const data = await response.json(); // Pega o conteúdo da resposta
+          return data.message; // Retorna a mensagem recebida do servidor
+
+      } catch (error) {
+          // Caso dê erro na comunicação
+          console.error('Erro:', error);
+          return 'Desculpe, tive um problema ao processar sua mensagem. Tente novamente mais tarde.';
       }
-    }
-  
-    // Função para adicionar mensagem no chat
-    function addMessage(content, isUser = false) {
-      const msgDiv = document.createElement('div');
-      msgDiv.className = `message ${isUser ? 'user' : 'bot'}`;
-      msgDiv.innerHTML = `
-        <div class="sender">${isUser ? 'Você' : 'FURIA Bot'}</div>
-        <div class="message-content">${content}</div>
-      `;
-      chatMessages.appendChild(msgDiv);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-  
-    // Envia mensagem ao backend e retorna resposta
-    async function processMessage(msg) {
-      try {
-        const typing = document.createElement('div');
-        typing.className = 'message bot typing';
-        typing.innerHTML = `
-          <div class="sender">FURIA Bot</div>
-          <div class="message-content"><div class="typing-indicator"><span></span><span></span><span></span></div></div>
-        `;
-        chatMessages.appendChild(typing);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-  
-        const res = await fetch('https://desafiofuria-production.up.railway.app/api/chat', {
-          method: 'POST', headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ message: msg })
-        });
-  
-        chatMessages.removeChild(typing);
-        if (!res.ok) throw new Error('Erro na comunicação');
-        const data = await res.json();
-        return data.message;
-      } catch (e) {
-        console.error('Erro processMessage:', e);
-        return 'Desculpe, tive um problema ao processar sua mensagem.';
+  }
+
+  // Função para pegar a mensagem digitada e enviar
+  async function sendMessage() {
+      const message = messageInput.value.trim(); // Remove espaços antes e depois do texto
+      if (message) {
+          addMessage(message, true); // Adiciona a mensagem do usuário no chat
+          messageInput.value = '';    // Limpa o campo de entrada
+
+          const response = await processMessage(message); // Processa a mensagem com o backend
+          addMessage(response); // Mostra a resposta do FURIA Bot no chat
       }
-    }
+  }
+
+  // Configura os eventos:
+  // Quando clicar no botão "enviar"
+  sendButton.addEventListener('click', sendMessage);
   
-    // Lê input e envia mensagem
-    async function sendMessage() {
-      const text = messageInput.value.trim();
-      if (!text) return;
-      addMessage(text, true);
-      messageInput.value = '';
-      const reply = await processMessage(text);
-      addMessage(reply, false);
-    }
-  
-    // Eventos de chat
-    sendButton.addEventListener('click', sendMessage);
-    messageInput.addEventListener('keypress', function(e) {
+  // Quando pressionar a tecla "Enter" dentro do campo de mensagem
+  messageInput.addEventListener('keypress', function(e) {
       if (e.key === 'Enter') {
-        e.preventDefault();
-        sendMessage();
+          sendMessage();
       }
-    });
-  
   });
-  
+
+});
