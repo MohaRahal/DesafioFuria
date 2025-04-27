@@ -18,18 +18,12 @@ app.use(express.json());
 // Objeto para armazenar o histórico de mensagens para cada sessão
 const chatHistories = {}; // { sessionId: [mensagens anteriores] }
 
-// Define a rota principal para o chat
+// Rota principal para o chat
 app.post('/api/chat', async (req, res) => {
-  // Chave da API do Google Gemini
   const apiKey = process.env.GEMINI_API_KEY;
-
-  // Recupera a mensagem enviada pelo usuário
   const userMessage = req.body.message;
-
-  // Recupera ou define um sessionId padrão
   const sessionId = req.body.sessionId || 'default';
 
-  // Se for a primeira vez da sessão, inicia o histórico com um prompt inicial
   if (!chatHistories[sessionId]) {
     chatHistories[sessionId] = [
       {
@@ -47,61 +41,58 @@ app.post('/api/chat', async (req, res) => {
     ];
   }
 
-  // Adiciona a nova mensagem do usuário ao histórico da sessão
   chatHistories[sessionId].push({
     role: "user",
     parts: [{ text: userMessage }]
   });
 
   try {
-    // URL da API do Gemini com a chave de API
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${apiKey}`;
+    // Verificar se a mensagem contém "streamers ao vivo" para buscar na Twitch
+    if (userMessage.toLowerCase().includes('streamers ao vivo')) {
+      const streamers = await getStreamersLive();
+      res.json({ message: `Os seguintes streamers da FURIA estão ao vivo: ${streamers}` });
+    } else {
+      // Se não for sobre streamers ao vivo, continua com a lógica do bot Gemini
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${apiKey}`;
+      const requestBody = {
+        contents: chatHistories[sessionId],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 500,
+          topP: 0.9
+        },
+        safetySettings: [
+          {
+            category: "HARM_CATEGORY_HARASSMENT",
+            threshold: "BLOCK_ONLY_HIGH"
+          }
+        ]
+      };
 
-    // Corpo da requisição que será enviado para o Gemini
-    const requestBody = {
-      contents: chatHistories[sessionId], // Histórico de mensagens
-      generationConfig: {
-        temperature: 0.7, // Grau de criatividade da resposta
-        maxOutputTokens: 500, // Quantidade máxima de tokens (palavras/frases)
-        topP: 0.9 // Controle de diversidade das respostas
-      },
-      safetySettings: [
-        {
-          category: "HARM_CATEGORY_HARASSMENT",
-          threshold: "BLOCK_ONLY_HIGH" // Bloqueia apenas assédio grave
+      const response = await axios.post(apiUrl, requestBody, {
+        headers: {
+          'Content-Type': 'application/json'
         }
-      ]
-    };
+      });
 
-    // Faz a requisição POST para o Gemini
-    const response = await axios.post(apiUrl, requestBody, {
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
+      const botReply = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || 
+        "Não consegui gerar uma resposta no momento. Pergunte algo sobre o elenco da FURIA!";
 
-    // Extrai a resposta do bot da resposta recebida
-    const botReply = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || 
-      "Não consegui gerar uma resposta no momento. Pergunte algo sobre o elenco da FURIA!";
+      chatHistories[sessionId].push({
+        role: "model",
+        parts: [{ text: botReply }]
+      });
 
-    // Adiciona a resposta do bot no histórico da sessão
-    chatHistories[sessionId].push({
-      role: "model",
-      parts: [{ text: botReply }]
-    });
-
-    // Retorna a resposta do bot para o front-end
-    res.json({ message: botReply });
+      res.json({ message: botReply });
+    }
 
   } catch (error) {
-    // Se houver erro, loga informações detalhadas no console
     console.error('Erro detalhado:', {
       status: error.response?.status,
       data: error.response?.data,
       message: error.message
     });
 
-    // Retorna erro amigável para o front-end
     res.status(500).json({
       message: "Deu ruim aqui no servidor da FURIA, FURIOSO! Tenta de novo em instantes!",
       error: error.message
@@ -109,10 +100,57 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-// (Opcional) Rota para resetar o histórico de uma sessão específica
+// Função para pegar os streamers ao vivo da FURIA
+async function getStreamersLive() {
+  const accessToken = await getTwitchAccessToken();
+  const url = 'https://api.twitch.tv/helix/streams';
+  const headers = {
+    'Client-ID': process.env.TWITCH_CLIENT_ID,
+    'Authorization': `Bearer ${accessToken}`
+  };
+  const params = {
+    'team': 'furia'
+  };
+
+  try {
+    const response = await axios.get(url, { headers, params });
+
+    if (response.data.data.length > 0) {
+      return response.data.data.map(stream => stream.user_name).join(', ');
+    } else {
+      return 'Nenhum streamer da FURIA está ao vivo no momento.';
+    }
+  } catch (error) {
+    console.error('Erro ao buscar streamers da FURIA:', error);
+    return 'Erro ao buscar streamers da FURIA.';
+  }
+}
+
+// Função para obter o token de acesso da Twitch
+async function getTwitchAccessToken() {
+  const clientId = process.env.TWITCH_CLIENT_ID;
+  const clientSecret = process.env.TWITCH_CLIENT_SECRET;
+
+  try {
+    const response = await axios.post('https://id.twitch.tv/oauth2/token', null, {
+      params: {
+        client_id: clientId,
+        client_secret: clientSecret,
+        grant_type: 'client_credentials'
+      }
+    });
+
+    return response.data.access_token;
+  } catch (error) {
+    console.error('Erro ao obter o token de acesso da Twitch:', error);
+    throw error;
+  }
+}
+
+// Rota para resetar o histórico de uma sessão específica
 app.post('/api/reset', (req, res) => {
   const sessionId = req.body.sessionId || 'default';
-  delete chatHistories[sessionId]; // Deleta o histórico da sessão
+  delete chatHistories[sessionId];
   res.json({ message: 'Sessão resetada com sucesso.' });
 });
 
@@ -120,4 +158,3 @@ app.post('/api/reset', (req, res) => {
 app.listen(port, () => {
   console.log(`Servidor rodando na porta ${port}`);
 });
-

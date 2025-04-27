@@ -81,38 +81,6 @@ body {
   border-right: 1px solid #333;
 }
 
-.typing-indicator {
-  display: flex;
-  padding: 5px 0;
-}
-
-.typing-indicator span {
-  height: 8px;
-  width: 8px;
-  background-color: var(--furia-white);
-  border-radius: 50%;
-  display: inline-block;
-  margin-right: 5px;
-  animation: bounce 1.5s infinite ease-in-out;
-}
-
-.typing-indicator span:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.typing-indicator span:nth-child(3) {
-  animation-delay: 0.4s;
-}
-
-@keyframes bounce {
-  0%, 60%, 100% {
-    transform: translateY(0);
-  }
-  30% {
-    transform: translateY(-5px);
-  }
-}
-
 .menu-item {
   padding: 12px 15px;
   border-radius: 5px;
@@ -139,16 +107,17 @@ body {
   width: 100%;
   height: 100%;
   background: url('https://cdn.dribbble.com/userupload/11627400/file/still-500c8d964bf177ef735203e3e3804ac2.gif') center/cover;
-  opacity: 0.7; /* Reduz a opacidade para melhor legibilidade */
-  z-index: -1; /* Coloca atrás do conteúdo */
+  opacity: 0.7;
+  z-index: -1;
 }
+
 .chat-container {
-  position: relative; /* Necessário para posicionar o fundo */
+  position: relative;
   flex-grow: 1;
   display: flex;
   flex-direction: column;
   height: 100%;
-  overflow: hidden; /* Impede que o GIF vaze */
+  overflow: hidden;
 }
 
 .chat-messages {
@@ -225,13 +194,75 @@ body {
   font-weight: bold;
 }
 
+/* Estilos para a seção de Streamers Ao Vivo */
+.live-streamers-container {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  overflow-y: auto;
+  background-color: rgba(0, 0, 0, 0.5);
+}
 
-/* Responsividade para mobile */
+.live-streamers-container h3 {
+  color: var(--furia-white);
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.streamer-card {
+  background-color: var(--furia-dark-gray);
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.streamer-card img {
+  width: 80px;
+  height: 80px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.streamer-card .streamer-info {
+  flex-grow: 1;
+  margin-left: 15px;
+}
+
+.streamer-card .streamer-info h4 {
+  color: var(--furia-white);
+  margin-bottom: 5px;
+  font-size: 18px;
+}
+
+.streamer-card .streamer-info p {
+  color: #aaa;
+  font-size: 14px;
+}
+
+.streamer-card .watch-button {
+  background-color: var(--furia-white);
+  color: var(--furia-black);
+  padding: 10px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.streamer-card .watch-button:hover {
+  background-color: #333;
+  color: var(--furia-white);
+}
+
 @media (max-width: 768px) {
   .sidebar {
     display: none;
   }
-  
+
   .title {
     font-size: 18px;
   }

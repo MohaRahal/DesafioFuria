@@ -16,13 +16,17 @@
     </div>   
     <div class="user-info">Mohamed Rahal</div>
   </div>
+  
   <div class="main-container">
     <div class="sidebar">
         <div class="menu-item active">Chat</div>
         <div class="menu-item" onclick="location.href='https://www.hltv.org/team/8297/furia#tab-matchesBox'">Próximos Jogos</div>
         <div class="menu-item" onclick="location.href='https://www.furia.gg/'">Loja</div>
         <div class="menu-item" onclick="location.href='https://github.com/MohaRahal'">Suporte</div>
+        <!-- Nova aba para os streamers ao vivo -->
+        <div class="menu-item" onclick="showLiveStreamers()">Streamers Ao Vivo</div>
     </div>  
+    
     <div class="chat-container">
       <div class="chat-bg"></div>     
       <div class="chat-messages" id="chat-messages">
@@ -39,6 +43,13 @@
         <button id="send-button">Enviar</button>
       </div>
     </div>
+
+    <!-- Seção de Streamers ao Vivo -->
+    <div class="live-streamers-container" id="live-streamers-container" style="display:none;">
+      <h3>Streamers Ao Vivo</h3>
+      <div id="streamers-list"></div>
+    </div>
+
   </div>
 
 </body>
