@@ -1,74 +1,101 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Pega os elementos do DOM (HTML) que vamos manipular
-    const chatMessages = document.getElementById('chat-messages'); // Área onde aparecem as mensagens
-    const messageInput = document.getElementById('message-input'); // Campo de digitar a mensagem
-    const sendButton = document.getElementById('send-button');     // Botão de enviar mensagem
-    const streamersBtn = document.getElementById('streamers-btn'); // Botão de streamers ao vivo
-  
-    // Função para adicionar uma mensagem no chat (pode ser do usuário ou do bot)
+    // Pega os elementos do DOM que vamos manipular
+    const chatMessages = document.getElementById('chat-messages');
+    const messageInput = document.getElementById('message-input');
+    const sendButton = document.getElementById('send-button');
+    const streamersBtn = document.getElementById('streamers-btn');
+
+    // Função para adicionar mensagem no chat
     function addMessage(content, isUser = false) {
-        const messageDiv = document.createElement('div'); // Cria o container da mensagem
-        messageDiv.className = `message ${isUser ? 'user' : 'bot'}`; // Define a classe (user ou bot)
-  
-        const senderDiv = document.createElement('div'); // Cria o elemento para o nome de quem enviou
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+
+        const senderDiv = document.createElement('div');
         senderDiv.className = 'sender';
-        senderDiv.textContent = isUser ? 'Você' : 'FURIA Bot'; // Define o nome de acordo com quem enviou
-  
-        const contentDiv = document.createElement('div'); // Cria o elemento para o conteúdo da mensagem
+        senderDiv.textContent = isUser ? 'Você' : 'FURIA Bot';
+
+        const contentDiv = document.createElement('div');
         contentDiv.className = 'message-content';
-        contentDiv.innerHTML = content; // Coloca o texto da mensagem com HTML (para links)
-  
-        // Monta a mensagem no chat
+        contentDiv.innerHTML = content; // aceita HTML para links
+
         messageDiv.appendChild(senderDiv);
         messageDiv.appendChild(contentDiv);
-        
-        chatMessages.appendChild(messageDiv); // Adiciona no final da área de chat
-        chatMessages.scrollTop = chatMessages.scrollHeight; // Faz o chat rolar automaticamente pra baixo
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    // Função para buscar e mostrar os streamers ao vivo
-    async function getStreamersLive() {
-        try {
-            addMessage('Buscando streamers ao vivo...', false);
+    // Envia mensagem ao backend e retorna resposta
+    async function processMessage(msg) {
+        // indicador typing
+        const typing = document.createElement('div');
+        typing.className = 'message bot typing';
+        typing.innerHTML = `
+          <div class="sender">FURIA Bot</div>
+          <div class="message-content">
+            <div class="typing-indicator"><span></span><span></span><span></span></div>
+          </div>`;
+        chatMessages.appendChild(typing);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
 
-            const response = await fetch('https://desafiofuria-production.up.railway.app/api/chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+        try {
+            const res = await fetch('https://desafiofuria-production.up.railway.app/api/chat', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ message: msg })
+            });
+            chatMessages.removeChild(typing);
+            if (!res.ok) throw new Error('Erro na comunicação');
+            const data = await res.json();
+            return data.message;
+        } catch (e) {
+            chatMessages.removeChild(typing);
+            console.error(e);
+            return 'Desculpe, ocorreu um erro.';
+        }
+    }
+
+    // Envia mensagem do usuário
+    async function sendMessage() {
+        const text = messageInput.value.trim();
+        if (!text) return;
+        addMessage(text, true);
+        messageInput.value = '';
+        const reply = await processMessage(text);
+        addMessage(reply, false);
+    }
+
+    // Função para buscar e mostrar apenas streamers da Team FURIA ao vivo
+    async function getStreamersLive() {
+        addMessage('Buscando streamers da Team FURIA ao vivo...', false);
+        try {
+            const res = await fetch('https://desafiofuria-production.up.railway.app/api/chat', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ message: 'streamers ao vivo' })
             });
-  
-            const data = await response.json();
-            const message = data.message;
-  
-            if (message.includes('ao vivo')) {
-                const streamers = message.split(': ')[1].split(', ');
-                let streamerLinks = 'Streamers ao vivo:\n';
-  
-                streamers.forEach(streamer => {
-                    streamerLinks += `<a href="https://www.twitch.tv/${streamer}" target="_blank">${streamer}</a><br>`;
-                });
-  
-                addMessage(streamerLinks, false);
-            } else {
-                addMessage(message, false);
+            const data = await res.json();
+            let message = data.message;
+
+            // Extrai nomes
+            let names = [];
+            if (message.includes(':')) {
+                names = message.split(':')[1].split(',').map(n => n.trim());
             }
-        } catch (error) {
-            console.error('Erro ao buscar streamers ao vivo:', error);
-            addMessage('Erro ao buscar streamers ao vivo.', false);
+            // Filtra apenas logins que contenham 'furia'
+            const furiaOnly = names.filter(n => n.toLowerCase().includes('furia'));
+
+            if (furiaOnly.length) {
+                const links = furiaOnly.map(n => `<a href=\"https://twitch.tv/${n}\" target=\"_blank\">${n}</a>`).join(', ');
+                addMessage(`Streamers da Team FURIA ao vivo: ${links}`, false);
+            } else {
+                addMessage('Nenhum streamer da Team FURIA está ao vivo no momento.', false);
+            }
+        } catch (err) {
+            console.error(err);
+            addMessage('Erro ao buscar streamers da Team FURIA.', false);
         }
     }
 
-    // Evento de clique no botão "Streamers ao Vivo"
-    streamersBtn.addEventListener('click', getStreamersLive);
-    
-    // Configura os eventos:
+    // Eventos
     sendButton.addEventListener('click', sendMessage);
-    
-    messageInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            sendMessage();
-        }
-    });
+    messageInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
+    streamersBtn.addEventListener('click', getStreamersLive);
 });
