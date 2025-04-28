@@ -70,9 +70,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const clientId = process.env.TWITCH_CLIENT_ID; // Insira seu Client ID aqui
         const accessToken = await getTwitchAccessToken(clientId); // Função que vai obter o token de acesso da Twitch
     
+        if (!accessToken) {
+            console.error("Token de acesso não obtido.");
+            addMessage("Erro ao obter token de acesso da Twitch.", false);
+            return;
+        }
+    
         // Lista de streamers da Team FURIA
-        const teamFuriaStreamers = ['retalha', 'streamer1', 'streamer2']; // Adicione os nomes de streamers aqui
-        
+        const teamFuriaStreamers = ['xarola_']; // Adicione os nomes de streamers aqui
+    
         try {
             // Verificar se os streamers estão ao vivo na API Kraken
             const streams = await Promise.all(
@@ -84,14 +90,28 @@ document.addEventListener('DOMContentLoaded', function() {
                             'Authorization': `Bearer ${accessToken}`
                         }
                     })
-                    .then(res => res.json())
-                    .then(data => ({ streamer, data }));
+                    .then(res => {
+                        console.log(`Status da requisição para ${streamer}: ${res.status}`);  // Log do status da requisição
+                        if (!res.ok) {
+                            throw new Error(`Erro ao buscar dados para o streamer ${streamer}: ${res.statusText}`);
+                        }
+                        return res.json();
+                    })
+                    .then(data => {
+                        return { streamer, data };
+                    })
+                    .catch(err => {
+                        console.error(`Erro ao buscar dados de ${streamer}:`, err);
+                        return { streamer, error: err.message }; // Retorna erro para o streamer
+                    });
                 })
             );
     
             let message = '';
-            streams.forEach(({ streamer, data }) => {
-                if (data.stream) {
+            streams.forEach(({ streamer, data, error }) => {
+                if (error) {
+                    message += `Erro ao buscar dados de ${streamer}: ${error}<br>`;
+                } else if (data.stream) {
                     message += `${streamer} está ao vivo jogando ${data.stream.game} - ${data.stream.channel.status}: <a href="https://twitch.tv/${streamer}" target="_blank">${streamer}</a><br>`;
                 }
             });
@@ -102,10 +122,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
             addMessage(message, false);
         } catch (err) {
-            console.error(err);
+            console.error("Erro geral:", err);
             addMessage('Erro ao buscar streamers da Team FURIA.', false);
         }
     }
+    
     
     // Função para obter o token de acesso da Twitch (Client Credentials)
     async function getTwitchAccessToken(clientId) {
