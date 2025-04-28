@@ -2,7 +2,7 @@
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
-require('dotenv').config(); // Carrega variáveis de ambiente
+
 
 // Cria uma instância do aplicativo Express
 const app = express();
@@ -35,24 +35,28 @@ app.post('/api/chat', async (req, res) => {
   const userMessage = req.body.message;
   const sessionId = req.body.sessionId || 'default';
 
+  // Inicializa o histórico de chat se não existir para a sessão
   if (!chatHistories[sessionId]) {
     chatHistories[sessionId] = [
       {
         role: 'user',
-        parts: [{ text:
-          `Você é um assistente virtual oficial da FURIA Esports.\n` +
-          `Seja alegre, brinque com o fã chamando ele de FURIOSO às vezes.\n` +
-          `Você é especialista em esports e pode responder sobre o elenco da FURIA em CS2, LoL, Rocket League, Rainbow Six Siege e outros.\n` +
-          `Sempre responda de forma divertida e traga informações relevantes sobre a FURIA.` 
-        }]
+        parts: [
+          {
+            text: `Você é um assistente virtual oficial da FURIA Esports.\n` +
+                  `Seja alegre, brinque com o fã chamando ele de FURIOSO às vezes.\n` +
+                  `Você é especialista em esports e pode responder sobre o elenco da FURIA em CS2, LoL, Rocket League, Rainbow Six Siege e outros.\n` +
+                  `Sempre responda de forma divertida e traga informações relevantes sobre a FURIA.`
+          }
+        ]
       }
     ];
   }
 
+  // Adiciona a mensagem do usuário ao histórico
   chatHistories[sessionId].push({ role: 'user', parts: [{ text: userMessage }] });
 
   try {
-    // Verificar se a mensagem contém "streamers ao vivo"
+    // Verifica se a mensagem contém "streamers ao vivo"
     if (userMessage.toLowerCase().includes('streamers ao vivo')) {
       const streamers = await getStreamersLive();
       res.json({ message: `Os seguintes streamers da Team FURIA estão ao vivo: ${streamers}` });
@@ -86,7 +90,7 @@ app.post('/api/chat', async (req, res) => {
 async function getTwitchAccessToken() {
   const clientId = process.env.TWITCH_CLIENT_ID;
   const clientSecret = process.env.TWITCH_CLIENT_SECRET;
-  
+
   try {
     const resp = await axios.post('https://id.twitch.tv/oauth2/token', null, {
       params: { 
@@ -107,7 +111,7 @@ async function getStreamersLive() {
   try {
     // Usa a lista fixa de membros da FURIA definida no início
     const members = TEAM_MEMBERS;
-    
+
     if (!members.length) {
       return 'Nenhum membro encontrado na Team FURIA.';
     }
@@ -115,7 +119,7 @@ async function getStreamersLive() {
     // Obter token de acesso
     const token = await getTwitchAccessToken();
     const clientId = process.env.TWITCH_CLIENT_ID;
-    
+
     // Construir query params para a API
     const params = new URLSearchParams();
     members.forEach(login => params.append('user_login', login));
@@ -130,7 +134,7 @@ async function getStreamersLive() {
     });
 
     const live = streamsResp.data.data;
-    
+
     if (!live.length) {
       return 'Nenhum streamer da Team FURIA está ao vivo no momento.';
     }
@@ -139,7 +143,7 @@ async function getStreamersLive() {
     return live.map(stream => 
       `${stream.user_name} (jogando ${stream.game_name}: https://twitch.tv/${stream.user_login})`
     ).join(', ');
-    
+
   } catch (err) {
     console.error('Erro ao buscar streamers da FURIA:', err);
     return 'Erro ao buscar streamers da FURIA. Tente novamente mais tarde.';
