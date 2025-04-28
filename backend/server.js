@@ -109,44 +109,37 @@ async function getTwitchAccessToken() {
 // Função para pegar os streamers ao vivo da Team FURIA usando TEAM_MEMBERS
 async function getStreamersLive() {
   try {
-    // Usa a lista fixa de membros da FURIA definida no início
-    const members = TEAM_MEMBERS;
-
-    if (!members.length) {
-      return 'Nenhum membro encontrado na Team FURIA.';
+    // Verifica se o login foi fornecido
+    if (!streamerLogin) {
+      return 'Por favor, forneça um nome de streamer.';
     }
 
     // Obter token de acesso
     const token = await getTwitchAccessToken();
     const clientId = process.env.TWITCH_CLIENT_ID;
 
-    // Construir query params para a API
-    const params = new URLSearchParams();
-    members.forEach(login => params.append('user_login', login));
-
-    // Fazer requisição à API da Twitch para verificar streamers ao vivo
+    // Fazer requisição à API da Twitch para verificar o streamer específico
     const streamsResp = await axios.get('https://api.twitch.tv/helix/streams', {
       headers: {
         'Client-ID': clientId,
         'Authorization': `Bearer ${token}`
       },
-      params
+      params: { 'user_login': streamerLogin }
     });
 
     const live = streamsResp.data.data;
 
-    if (!live.length) {
-      return 'Nenhum streamer da Team FURIA está ao vivo no momento.';
+    // Verificar se o streamer está ao vivo
+    if (live.length > 0) {
+      const stream = live[0];
+      return `${stream.user_name} está ao vivo jogando ${stream.game_name}: https://twitch.tv/${stream.user_login}`;
+    } else {
+      return `${streamerLogin} não está ao vivo no momento.`;
     }
 
-    // Formatar uma resposta mais completa com nome do streamer, jogo e link
-    return live.map(stream => 
-      `${stream.user_name} (jogando ${stream.game_name}: https://twitch.tv/${stream.user_login})`
-    ).join(', ');
-
   } catch (err) {
-    console.error('Erro ao buscar streamers da FURIA:', err);
-    return 'Erro ao buscar streamers da FURIA. Tente novamente mais tarde.';
+    console.error('Erro ao buscar status do streamer:', err);
+    return 'Erro ao buscar status do streamer. Tente novamente mais tarde.';
   }
 }
 
