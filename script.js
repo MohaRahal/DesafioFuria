@@ -7,37 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const liveStreamersContainer = document.getElementById('live-streamers-container');
     const streamersList = document.getElementById('streamers-list');
     const chatContainer = document.querySelector('.chat-container');
-    const chatBtn = document.getElementById('chat-btn');
-    // No início do seu evento DOMContentLoaded, adicione:
-
-// Adicione este event listener para o botão de chat
-    chatBtn.addEventListener('click', function() {
-        // Exibe o chat e oculta o container de streamers
-        chatContainer.style.display = 'flex';
-        liveStreamersContainer.style.display = 'none';
-        
-        // Atualiza as classes ativas na barra lateral
-        document.querySelectorAll('.sidebar .menu-item').forEach(item => {
-            item.classList.remove('active');
-        });
-        chatBtn.classList.add('active');
-    });
-
-    // Modifique o event listener para o botão de streamers
-    streamersBtn.addEventListener('click', function() {
-        // Exibe o container de streamers e oculta o chat
-        liveStreamersContainer.style.display = 'block';
-        chatContainer.style.display = 'none';
-        
-        // Atualiza as classes ativas na barra lateral
-        document.querySelectorAll('.sidebar .menu-item').forEach(item => {
-            item.classList.remove('active');
-        });
-        streamersBtn.classList.add('active');
-        
-        // Verifica os streamers ao vivo
-        checkLiveStreamers();
-    });
+    
 
     // Configurações da Twitch API
     const TWITCH_CLIENT_ID = 'irqrpftbthlz0yh483m8908gqk9cxo'; // Substitua pelo seu Client ID
