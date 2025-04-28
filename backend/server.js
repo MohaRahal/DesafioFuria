@@ -43,7 +43,7 @@ app.post('/api/chat', async (req, res) => {
           `Você é um assistente virtual oficial da FURIA Esports.\n` +
           `Seja alegre, brinque com o fã chamando ele de FURIOSO às vezes.\n` +
           `Você é especialista em esports e pode responder sobre o elenco da FURIA em CS2, LoL, Rocket League, Rainbow Six Siege e outros.\n` +
-          `Sempre responda de forma divertida e traga informações relevantes sobre a FURIA.`
+          `Sempre responda de forma divertida e traga informações relevantes sobre a FURIA.` 
         }]
       }
     ];
@@ -82,17 +82,6 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-// Função para obter o token de acesso da Twitch (Client Credentials)
-async function getTwitchAccessToken() {
-  const clientId = process.env.TWITCH_CLIENT_ID;
-  const clientSecret = process.env.TWITCH_CLIENT_SECRET;
-  const resp = await axios.post('https://id.twitch.tv/oauth2/token', null, {
-    params: { client_id: clientId, client_secret: clientSecret, grant_type: 'client_credentials' }
-  });
-  return resp.data.access_token;
-}
-
-// Função para pegar os streamers ao vivo da Team FURIA usando TEAM_MEMBERS
 // Função para obter o token de acesso da Twitch (Client Credentials)
 async function getTwitchAccessToken() {
   const clientId = process.env.TWITCH_CLIENT_ID;
