@@ -9,8 +9,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const chatContainer = document.querySelector('.chat-container');
 
     // Configurações da Twitch API
-    const TWITCH_CLIENT_ID = 'SEU_CLIENT_ID'; // Substitua pelo seu Client ID
-    const TWITCH_CLIENT_SECRET = 'SEU_CLIENT_SECRET'; // Substitua pelo seu Client Secret
+    const TWITCH_CLIENT_ID = 'irqrpftbthlz0yh483m8908gqk9cxo'; // Substitua pelo seu Client ID
+    const TWITCH_CLIENT_SECRET = 'mq19phdohb2hj5jvgnwokec5qechdk'; // Substitua pelo seu Client Secret
 
     // Lista de streamers da FURIA que você deseja monitorar
     const FURIA_STREAMERS = [
