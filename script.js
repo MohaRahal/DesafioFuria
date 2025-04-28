@@ -18,6 +18,9 @@ document.addEventListener('DOMContentLoaded', function() {
         'mount', 'Vaxlon', 'IVDmaluco', 'FURIAtv', 'gabssf', 'yuurih', 'kaah', 'guerri',
         'izaa', 'paulanobre', 'daaygamer_', 'yanxnz_', 'MaestroPierre', 'MurilloMelloBR',
         'raf1nhafps', 'sofiaespanha', 'oManelzin_', 'mwzera', 'Dezorganizada', 'gafallen',
+        'siddecs','Jxmo','OsukaXD','havocfps1','noooobzim','losttrl','ImMadness','kheyze7',
+        'herdszz','igoorctg','XAROLA_','brino','crisguedes','chelok1ng','desire18k','lossvir',
+        '1Aboveee','skzvlr1','drufinhorl','ayulol1'
     ];
 
     // Função que adiciona uma nova mensagem no chat (do usuário ou do bot)
