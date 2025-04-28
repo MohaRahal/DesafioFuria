@@ -66,39 +66,47 @@ document.addEventListener('DOMContentLoaded', function() {
     // Função para buscar e mostrar apenas streamers da Team FURIA ao vivo
     async function getStreamersLive() {
         addMessage('Buscando streamers da Team FURIA ao vivo...', false);
-
+    
         const clientId = process.env.TWITCH_CLIENT_ID; // Insira seu Client ID aqui
         const accessToken = await getTwitchAccessToken(clientId); // Função que vai obter o token de acesso da Twitch
-
+    
+        // Lista de streamers da Team FURIA
+        const teamFuriaStreamers = ['retalha', 'streamer1', 'streamer2']; // Adicione os nomes de streamers aqui
+        
         try {
-            const res = await fetch('https://api.twitch.tv/helix/streams', {
-                method: 'GET',
-                headers: {
-                    'Client-ID': clientId,
-                    'Authorization': `Bearer ${accessToken}`
-                },
-                params: {
-                    'user_login': 'retalha' // Exemplo de streamer que você deseja verificar. Pode ser uma lista de streamers.
+            // Verificar se os streamers estão ao vivo na API Kraken
+            const streams = await Promise.all(
+                teamFuriaStreamers.map(streamer => {
+                    return fetch(`https://api.twitch.tv/kraken/streams/${streamer}`, {
+                        method: 'GET',
+                        headers: {
+                            'Client-ID': clientId,
+                            'Authorization': `Bearer ${accessToken}`
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(data => ({ streamer, data }));
+                })
+            );
+    
+            let message = '';
+            streams.forEach(({ streamer, data }) => {
+                if (data.stream) {
+                    message += `${streamer} está ao vivo jogando ${data.stream.game} - ${data.stream.channel.status}: <a href="https://twitch.tv/${streamer}" target="_blank">${streamer}</a><br>`;
                 }
             });
-            const data = await res.json();
-            let message = '';
-
-            if (data.data.length > 0) {
-                data.data.forEach(stream => {
-                    message += `${stream.user_name} está ao vivo jogando ${stream.game_name}: https://twitch.tv/${stream.user_name}<br>`;
-                });
-            } else {
+    
+            if (!message) {
                 message = 'Nenhum streamer da Team FURIA está ao vivo no momento.';
             }
-
+    
             addMessage(message, false);
         } catch (err) {
             console.error(err);
             addMessage('Erro ao buscar streamers da Team FURIA.', false);
         }
     }
-
+    
     // Função para obter o token de acesso da Twitch (Client Credentials)
     async function getTwitchAccessToken(clientId) {
         const clientSecret = process.env.TWITCH_CLIENT_SECRET; // Insira seu Client Secret aqui
