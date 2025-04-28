@@ -4,24 +4,23 @@ document.addEventListener('DOMContentLoaded', function() {
     const messageInput = document.getElementById('message-input');
     const sendButton = document.getElementById('send-button');
     const streamersBtn = document.getElementById('streamers-btn');
-    const chatBtn = document.getElementById('chat-btn'); // Novo botão do Chat
+    const chatBtn = document.getElementById('chat-btn');
     const liveStreamersContainer = document.getElementById('live-streamers-container');
     const streamersList = document.getElementById('streamers-list');
     const chatContainer = document.querySelector('.chat-container');
 
-    // Configurações da Twitch API
-    const TWITCH_CLIENT_ID = 'irqrpftbthlz0yh483m8908gqk9cxo'; // Substitua pelo seu Client ID
-    const TWITCH_CLIENT_SECRET = 'mq19phdohb2hj5jvgnwokec5qechdk'; // Substitua pelo seu Client Secret
+    // Configurações da API da Twitch
+    const TWITCH_CLIENT_ID = 'irqrpftbthlz0yh483m8908gqk9cxo';
+    const TWITCH_CLIENT_SECRET = 'mq19phdohb2hj5jvgnwokec5qechdk';
 
-    // Lista de streamers da FURIA que você deseja monitorar
+    // Lista de streamers da FURIA que queremos monitorar
     const FURIA_STREAMERS = [
         'mount', 'Vaxlon', 'IVDmaluco', 'FURIAtv', 'gabssf', 'yuurih', 'kaah', 'guerri',
         'izaa', 'paulanobre', 'daaygamer_', 'yanxnz_', 'MaestroPierre', 'MurilloMelloBR',
         'raf1nhafps', 'sofiaespanha', 'oManelzin_', 'mwzera', 'Dezorganizada', 'gafallen',
     ];
-    
 
-    // Função para adicionar mensagem no chat
+    // Função que adiciona uma nova mensagem no chat (do usuário ou do bot)
     function addMessage(content, isUser = false) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
@@ -32,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const contentDiv = document.createElement('div');
         contentDiv.className = 'message-content';
-        contentDiv.innerHTML = content; // aceita HTML para links
+        contentDiv.innerHTML = content; // Permite HTML para links
 
         messageDiv.appendChild(senderDiv);
         messageDiv.appendChild(contentDiv);
@@ -40,8 +39,9 @@ document.addEventListener('DOMContentLoaded', function() {
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    // Envia mensagem ao backend e retorna resposta
+    // Função que envia a mensagem para o backend e retorna a resposta do bot
     async function processMessage(msg) {
+        // Mostra indicador de "digitando..."
         const typing = document.createElement('div');
         typing.className = 'message bot typing';
         typing.innerHTML = `
@@ -55,10 +55,11 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const res = await fetch('https://desafiofuria-production.up.railway.app/api/chat', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message: msg })
             });
-            chatMessages.removeChild(typing);
+            chatMessages.removeChild(typing); // Remove indicador ao receber resposta
+
             if (!res.ok) throw new Error('Erro na comunicação');
             const data = await res.json();
             return data.message;
@@ -69,43 +70,43 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Envia mensagem do usuário
+    // Função que trata o envio da mensagem pelo usuário
     async function sendMessage() {
         const text = messageInput.value.trim();
         if (!text) return;
-        addMessage(text, true);
-        messageInput.value = '';
-        const reply = await processMessage(text);
-        addMessage(reply, false);
+        addMessage(text, true);      // Adiciona a mensagem do usuário no chat
+        messageInput.value = '';     // Limpa o input
+        const reply = await processMessage(text); // Envia para o backend e pega a resposta
+        addMessage(reply, false);    // Adiciona a resposta do bot no chat
     }
 
-    // Eventos de envio de mensagem
+    // Evento de clique no botão de enviar mensagem
     sendButton.addEventListener('click', sendMessage);
+
+    // Evento de pressionar Enter no campo de mensagem
     messageInput.addEventListener('keypress', e => {
         if (e.key === 'Enter') sendMessage();
     });
 
-    // ===== INTEGRAÇÃO COM API DA TWITCH =====
-
-    // Botão Streamers Ao Vivo
+    // Evento de clique no botão "Streamers Ao Vivo"
     streamersBtn.addEventListener('click', function() {
         if (liveStreamersContainer.style.display === 'none') {
-            liveStreamersContainer.style.display = 'block';
-            chatContainer.style.display = 'none';
-            checkLiveStreamers();
+            liveStreamersContainer.style.display = 'block'; // Mostra lista de streamers
+            chatContainer.style.display = 'none';           // Esconde o chat
+            checkLiveStreamers();                           // Verifica quem está ao vivo
         } else {
             liveStreamersContainer.style.display = 'none';
             chatContainer.style.display = 'flex';
         }
     });
 
-    // Novo: Botão Chat
+    // Evento de clique no botão "Chat"
     chatBtn.addEventListener('click', function() {
         chatContainer.style.display = 'flex';          // Mostra o chat
         liveStreamersContainer.style.display = 'none'; // Esconde os streamers
     });
 
-    // Função para obter o token de acesso da Twitch
+    // Função que obtém o token de acesso da Twitch
     async function getTwitchAccessToken() {
         try {
             const response = await fetch(`https://id.twitch.tv/oauth2/token?client_id=${TWITCH_CLIENT_ID}&client_secret=${TWITCH_CLIENT_SECRET}&grant_type=client_credentials`, {
@@ -119,7 +120,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Função para verificar quais streamers estão ao vivo
+    // Função que verifica quais streamers da FURIA estão ao vivo
     async function checkLiveStreamers() {
         streamersList.innerHTML = '<p>Carregando streamers...</p>';
 
@@ -140,7 +141,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             const data = await response.json();
-            displayLiveStreamers(data.data);
+            displayLiveStreamers(data.data); // Exibe os streamers ao vivo
 
         } catch (error) {
             console.error('Erro ao verificar streamers ao vivo:', error);
@@ -148,7 +149,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Função para exibir os streamers ao vivo
+    // Função que exibe os streamers que estão ao vivo
     function displayLiveStreamers(liveStreams) {
         streamersList.innerHTML = '';
 
@@ -164,6 +165,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const streamersGrid = document.createElement('div');
         streamersGrid.className = 'streamers-grid';
 
+        // Cria um card para cada streamer ao vivo
         liveStreams.forEach(stream => {
             const streamerCard = document.createElement('div');
             streamerCard.className = 'streamer-card';
