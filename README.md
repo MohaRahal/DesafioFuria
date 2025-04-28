@@ -6,14 +6,14 @@ Este projeto é um chatbot interativo desenvolvido para fãs da **FURIA Esports*
 
 - **Frontend**: HTML, CSS, JavaScript
 - **Backend**: Node.js, Express
-- **API de Geração de Conteúdo**: Google Gemini
+- **API de Geração de Conteúdo**: Google Gemini , Twitch
 - **Hospedagem Backend**: Railway
 - **Hospedagem Frontend**: Vercel
 
 ## Funcionalidades
 
 - Responde a perguntas sobre o elenco da FURIA Esports de forma divertida e engajante.
-- Links para Loja oficial da Furia Esports , próximos Jogos e suporte retornando para meu github.
+- Links para Loja oficial da Furia Esports , próximos Jogos , streamers online  e suporte retornando para meu github.
 - Mantém o contexto das conversas, utilizando o histórico de mensagens.
 - Interage com os fãs de maneira personalizada, chamando-os de "FURIOSO" e trazendo informações relevantes sobre os jogadores.
 - Implementa uma API generativa de linguagem para fornecer respostas dinâmicas.
