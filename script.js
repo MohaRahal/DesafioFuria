@@ -12,15 +12,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const TWITCH_CLIENT_ID = 'irqrpftbthlz0yh483m8908gqk9cxo'; // Substitua pelo seu Client ID
     const TWITCH_CLIENT_SECRET = 'mq19phdohb2hj5jvgnwokec5qechdk'; // Substitua pelo seu Client Secret
 
-    // Lista de streamers da FURIA que você deseja monitorar
+    // Lista de streamers da FURIA que você deseja monitorar (apenas nomes de usuário)
     const FURIA_STREAMERS = [
-        { name: 'guerri', id: '108979370' },
-        { name: 'arT', id: '39175521' },
-        { name: 'KSCERATO', id: '181441123' },
-        { name: 'drop', id: '54310069' },
-        { name: 'yuurih', id: '123506188' },
-        { name: 'chelo', id: '43423683' },
-        { name: 'FURIA', id: '34936487' } // Canal oficial da FURIA
+        'guerri', 
+        'artcsgo', 
+        'kscerato', 
+        'drop', 
+        'yuurih', 
+        'chelok1ng', 
+        'furiatv',
+        'mount',
+        'paulanobre'
     ];
 
     // Função para adicionar mensagem no chat
@@ -129,11 +131,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            // Criar string com IDs de usuário para a query
-            const userIds = FURIA_STREAMERS.map(streamer => `user_id=${streamer.id}`).join('&');
+            // Criar string com nomes de usuário para a query
+            const userLogins = FURIA_STREAMERS.map(streamer => `user_login=${streamer}`).join('&');
             
             // Fazer requisição para a API da Twitch
-            const response = await fetch(`https://api.twitch.tv/helix/streams?${userIds}`, {
+            const response = await fetch(`https://api.twitch.tv/helix/streams?${userLogins}`, {
                 headers: {
                     'Client-ID': TWITCH_CLIENT_ID,
                     'Authorization': `Bearer ${accessToken}`
@@ -172,10 +174,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Adicionar cada streamer ao vivo à lista
         liveStreams.forEach(stream => {
-            // Encontrar o nome do streamer a partir do ID
-            const streamer = FURIA_STREAMERS.find(s => s.id === stream.user_id);
-            const streamerName = streamer ? streamer.name : stream.user_name;
-            
             // Criar card para o streamer
             const streamerCard = document.createElement('div');
             streamerCard.className = 'streamer-card';
@@ -187,14 +185,14 @@ document.addEventListener('DOMContentLoaded', function() {
             
             streamerCard.innerHTML = `
                 <div class="streamer-thumbnail">
-                    <img src="${thumbnail}" alt="${streamerName} stream thumbnail">
+                    <img src="${thumbnail}" alt="${stream.user_name} stream thumbnail">
                     <div class="live-badge">AO VIVO</div>
                 </div>
                 <div class="streamer-info">
-                    <h3>${streamerName}</h3>
+                    <h3>${stream.user_name}</h3>
                     <p>${stream.title}</p>
                     <p>${stream.viewer_count} espectadores</p>
-                    <a href="https://twitch.tv/${streamerName}" target="_blank" class="watch-button">Assistir</a>
+                    <a href="https://twitch.tv/${stream.user_login}" target="_blank" class="watch-button">Assistir</a>
                 </div>
             `;
             
