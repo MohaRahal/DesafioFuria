@@ -64,35 +64,27 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Função para buscar e mostrar apenas streamers da Team FURIA ao vivo
-    async function getStreamersLive() {
-        addMessage('Buscando streamers da Team FURIA ao vivo...', false);
-        try {
-            const res = await fetch('https://desafiofuria-production.up.railway.app/api/chat', {
-                method: 'POST', headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ message: 'streamers ao vivo' })
-            });
-            const data = await res.json();
-            let message = data.message;
-
-            // Extrai nomes
-            let names = [];
-            if (message.includes(':')) {
-                names = message.split(':')[1].split(',').map(n => n.trim());
-            }
-            // Filtra apenas logins que contenham 'furia'
-            const furiaOnly = names.filter(n => n.toLowerCase().includes('furia'));
-
-            if (furiaOnly.length) {
-                const links = furiaOnly.map(n => `<a href=\"https://twitch.tv/${n}\" target=\"_blank\">${n}</a>`).join(', ');
-                addMessage(`Streamers da Team FURIA ao vivo: ${links}`, false);
-            } else {
-                addMessage('Nenhum streamer da Team FURIA está ao vivo no momento.', false);
-            }
-        } catch (err) {
-            console.error(err);
-            addMessage('Erro ao buscar streamers da Team FURIA.', false);
-        }
+    // Função para buscar e mostrar apenas streamers da Team FURIA ao vivo
+async function getStreamersLive() {
+    addMessage('Buscando streamers da Team FURIA ao vivo...', false);
+    try {
+        const res = await fetch('https://desafiofuria-production.up.railway.app/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: 'streamers ao vivo' })
+        });
+        const data = await res.json();
+        let message = data.message;
+        addMessage(message, false);
+    } catch (err) {
+        console.error(err);
+        addMessage('Erro ao buscar streamers da Team FURIA.', false);
     }
+}
+
+// Evento do botão para mostrar streamers ao vivo
+streamersBtn.addEventListener('click', getStreamersLive);
+
 
     // Eventos
     sendButton.addEventListener('click', sendMessage);

@@ -104,37 +104,35 @@ async function getStreamersLive() {
     const clientId = process.env.TWITCH_CLIENT_ID;
     const accessToken = await getTwitchAccessToken(); // Obter o token de acesso da Twitch
 
-    // Lista para armazenar o status do streamer
     let liveStreamers = [];
 
     // Busca pelo streamer específico "Retalha"
     const response = await axios.get('https://api.twitch.tv/helix/streams', {
-      headers: {
-        'Client-ID': clientId,
-        'Authorization': `Bearer ${accessToken}`
-      },
-      params: {
-        'user_login': STREAMER_TO_CHECK
-      }
+        headers: {
+            'Client-ID': clientId,
+            'Authorization': `Bearer ${accessToken}`
+        },
+        params: {
+            'user_login': STREAMER_TO_CHECK
+        }
     });
 
     const live = response.data.data;
     if (live.length > 0) {
-      const stream = live[0];
-      liveStreamers.push(`${stream.user_name} está ao vivo jogando ${stream.game_name}: https://twitch.tv/${stream.user_login}`);
+        const stream = live[0];
+        liveStreamers.push(`${stream.user_name} está ao vivo jogando ${stream.game_name}: https://twitch.tv/${stream.user_login}`);
     }
 
-    // Se "Retalha" estiver ao vivo, retorna a resposta
     if (liveStreamers.length > 0) {
-      return liveStreamers.join(', ');
+        return liveStreamers.join(', ');
     } else {
-      return `${STREAMER_TO_CHECK} não está ao vivo no momento.`;
+        return `${STREAMER_TO_CHECK} não está ao vivo no momento.`;
     }
 
-  } catch (err) {
+} catch (err) {
     console.error('Erro ao buscar status do streamer:', err);
     return 'Erro ao buscar status do streamer. Tente novamente mais tarde.';
-  }
+}
 }
 
 // Rota para resetar o histórico de uma sessão específica
