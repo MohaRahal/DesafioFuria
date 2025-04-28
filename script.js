@@ -130,26 +130,24 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Função para obter o token de acesso da Twitch (Client Credentials)
     async function getTwitchAccessToken(clientId) {
-        const clientSecret = process.env.TWITCH_CLIENT_SECRET; // Insira seu Client Secret aqui
-        try {
-            const resp = await fetch('https://id.twitch.tv/oauth2/token', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: new URLSearchParams({
-                    client_id: clientId,
-                    client_secret: clientSecret,
-                    grant_type: 'client_credentials'
-                })
-            });
-            const data = await resp.json();
-            return data.access_token;
-        } catch (error) {
-            console.error('Erro ao obter o token da Twitch:', error);
-            throw new Error('Falha na autenticação com a Twitch');
-        }
-    }
+        const clientId = process.env.TWITCH_CLIENT_ID;
+  const clientSecret = process.env.TWITCH_CLIENT_SECRET;
+
+  try {
+    const resp = await axios.post('https://id.twitch.tv/oauth2/token', null, {
+      params: { 
+        client_id: clientId, 
+        client_secret: clientSecret, 
+        grant_type: 'client_credentials' 
+      }
+    });
+    return resp.data.access_token;
+  } catch (error) {
+    console.error('Erro ao obter token de acesso da Twitch:', error.message);
+    throw new Error('Falha na autenticação com a Twitch');
+  }
+}
+
 
     // Evento do botão para mostrar streamers ao vivo
     streamersBtn.addEventListener('click', getStreamersLive);
