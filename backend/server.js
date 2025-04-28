@@ -18,15 +18,8 @@ app.use(express.json());
 // Objeto para armazenar o histórico de mensagens para cada sessão
 const chatHistories = {}; // { sessionId: [mensagens anteriores] }
 
-// Array fixo de logins oficiais da Team FURIA (manutenção mínima)
-const TEAM_MEMBERS = [
-  'xarola_',
-  'mwzera',
-  'paulanobre',
-  'ivdmaluco',
-  'furiatv',
-  // Adicione aqui outros logins oficiais da equipe
-];
+// Nome do streamer que queremos verificar
+const STREAMER_TO_CHECK = 'Retalha';
 
 // Rota principal para o chat
 app.post('/api/chat', async (req, res) => {
@@ -44,7 +37,7 @@ app.post('/api/chat', async (req, res) => {
             text: `Você é um assistente virtual oficial da FURIA Esports.\n` +
                   `Seja alegre, brinque com o fã chamando ele de FURIOSO às vezes.\n` +
                   `Você é especialista em esports e pode responder sobre o elenco da FURIA em CS2, LoL, Rocket League, Rainbow Six Siege e outros.\n` +
-                  `Sempre responda de forma divertida e traga informações relevantes sobre a FURIA.`
+                  `Sempre responda de forma divertida e traga informações relevantes sobre a FURIA.` 
           }
         ]
       }
@@ -55,10 +48,10 @@ app.post('/api/chat', async (req, res) => {
   chatHistories[sessionId].push({ role: 'user', parts: [{ text: userMessage }] });
 
   try {
-    // Verifica se a mensagem contém "streamers ao vivo"
-    if (userMessage.toLowerCase().includes('streamers ao vivo')) {
-      const streamers = await getStreamersLive();
-      res.json({ message: `Os seguintes streamers da Team FURIA estão ao vivo: ${streamers}` });
+    // Verifica se a mensagem contém "streamer Retalha ao vivo"
+    if (userMessage.toLowerCase().includes('retalha ao vivo')) {
+      const streamStatus = await getStreamersLive();
+      res.json({ message: streamStatus });
     } else {
       // Lógica padrão do bot Gemini
       const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${apiKey}`;
@@ -105,44 +98,42 @@ async function getTwitchAccessToken() {
   }
 }
 
-// Função para pegar os streamers ao vivo da Team FURIA usando TEAM_MEMBERS
+// Função para pegar o status de "Retalha" ao vivo
 async function getStreamersLive() {
   try {
-    const clientId = process.env.TWITCH_CLIENT_ID;  // Usar o Client ID do ambiente
-    const accessToken = await getTwitchAccessToken();  // Obter o token de acesso da Twitch
+    const clientId = process.env.TWITCH_CLIENT_ID;
+    const accessToken = await getTwitchAccessToken(); // Obter o token de acesso da Twitch
 
-    // Lista para armazenar os streamers ao vivo
+    // Lista para armazenar o status do streamer
     let liveStreamers = [];
 
-    // Itera sobre todos os membros da FURIA
-    for (let streamerLogin of TEAM_MEMBERS) {
-      const response = await axios.get('https://api.twitch.tv/helix/streams', {
-        headers: {
-          'Client-ID': clientId,
-          'Authorization': `Bearer ${accessToken}`
-        },
-        params: {
-          'user_login': streamerLogin
-        }
-      });
-
-      const live = response.data.data;
-      if (live.length > 0) {
-        const stream = live[0];
-        liveStreamers.push(`${stream.user_name} está ao vivo jogando ${stream.game_name}: https://twitch.tv/${stream.user_login}`);
+    // Busca pelo streamer específico "Retalha"
+    const response = await axios.get('https://api.twitch.tv/helix/streams', {
+      headers: {
+        'Client-ID': clientId,
+        'Authorization': `Bearer ${accessToken}`
+      },
+      params: {
+        'user_login': STREAMER_TO_CHECK
       }
+    });
+
+    const live = response.data.data;
+    if (live.length > 0) {
+      const stream = live[0];
+      liveStreamers.push(`${stream.user_name} está ao vivo jogando ${stream.game_name}: https://twitch.tv/${stream.user_login}`);
     }
 
-    // Se houver streamers ao vivo, retorna a lista formatada
+    // Se "Retalha" estiver ao vivo, retorna a resposta
     if (liveStreamers.length > 0) {
       return liveStreamers.join(', ');
     } else {
-      return 'Nenhum streamer da Team FURIA está ao vivo no momento.';
+      return `${STREAMER_TO_CHECK} não está ao vivo no momento.`;
     }
 
   } catch (err) {
-    console.error('Erro ao buscar status dos streamers:', err);
-    return 'Erro ao buscar status dos streamers. Tente novamente mais tarde.';
+    console.error('Erro ao buscar status do streamer:', err);
+    return 'Erro ao buscar status do streamer. Tente novamente mais tarde.';
   }
 }
 
