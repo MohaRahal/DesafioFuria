@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // indicador typing
         const typing = document.createElement('div');
         typing.className = 'message bot typing';
-        typing.innerHTML = `
+        typing.innerHTML = ` 
           <div class="sender">FURIA Bot</div>
           <div class="message-content">
             <div class="typing-indicator"><span></span><span></span><span></span></div>
@@ -64,30 +64,68 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Função para buscar e mostrar apenas streamers da Team FURIA ao vivo
-    // Função para buscar e mostrar apenas streamers da Team FURIA ao vivo
-async function getStreamersLive() {
-    addMessage('Buscando streamers da Team FURIA ao vivo...', false);
-    try {
-        const res = await fetch('https://desafiofuria-production.up.railway.app/api/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: 'streamers ao vivo' })
-        });
-        const data = await res.json();
-        let message = data.message;
-        addMessage(message, false);
-    } catch (err) {
-        console.error(err);
-        addMessage('Erro ao buscar streamers da Team FURIA.', false);
+    async function getStreamersLive() {
+        addMessage('Buscando streamers da Team FURIA ao vivo...', false);
+
+        const clientId = process.env.TWITCH_CLIENT_ID; // Insira seu Client ID aqui
+        const accessToken = await getTwitchAccessToken(clientId); // Função que vai obter o token de acesso da Twitch
+
+        try {
+            const res = await fetch('https://api.twitch.tv/helix/streams', {
+                method: 'GET',
+                headers: {
+                    'Client-ID': clientId,
+                    'Authorization': `Bearer ${accessToken}`
+                },
+                params: {
+                    'user_login': 'retalha' // Exemplo de streamer que você deseja verificar. Pode ser uma lista de streamers.
+                }
+            });
+            const data = await res.json();
+            let message = '';
+
+            if (data.data.length > 0) {
+                data.data.forEach(stream => {
+                    message += `${stream.user_name} está ao vivo jogando ${stream.game_name}: https://twitch.tv/${stream.user_name}<br>`;
+                });
+            } else {
+                message = 'Nenhum streamer da Team FURIA está ao vivo no momento.';
+            }
+
+            addMessage(message, false);
+        } catch (err) {
+            console.error(err);
+            addMessage('Erro ao buscar streamers da Team FURIA.', false);
+        }
     }
-}
 
-// Evento do botão para mostrar streamers ao vivo
-streamersBtn.addEventListener('click', getStreamersLive);
+    // Função para obter o token de acesso da Twitch (Client Credentials)
+    async function getTwitchAccessToken(clientId) {
+        const clientSecret = process.env.TWITCH_CLIENT_SECRET; // Insira seu Client Secret aqui
+        try {
+            const resp = await fetch('https://id.twitch.tv/oauth2/token', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({
+                    client_id: clientId,
+                    client_secret: clientSecret,
+                    grant_type: 'client_credentials'
+                })
+            });
+            const data = await resp.json();
+            return data.access_token;
+        } catch (error) {
+            console.error('Erro ao obter o token da Twitch:', error);
+            throw new Error('Falha na autenticação com a Twitch');
+        }
+    }
 
+    // Evento do botão para mostrar streamers ao vivo
+    streamersBtn.addEventListener('click', getStreamersLive);
 
     // Eventos
     sendButton.addEventListener('click', sendMessage);
     messageInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
-    streamersBtn.addEventListener('click', getStreamersLive);
 });
