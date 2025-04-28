@@ -19,6 +19,21 @@ document.addEventListener('DOMContentLoaded', function() {
         'izaa', 'paulanobre', 'daaygamer_', 'yanxnz_', 'MaestroPierre', 'MurilloMelloBR',
         'raf1nhafps', 'sofiaespanha', 'oManelzin_', 'mwzera', 'Dezorganizada', 'gafallen',
     ];
+    chatButton.addEventListener('click', () => {
+        chatContainer.style.display = 'flex';
+        streamersContainer.style.display = 'none';
+        
+        chatButton.classList.add('active');
+        streamersButton.classList.remove('active');
+      });
+    
+      streamersButton.addEventListener('click', () => {
+        chatContainer.style.display = 'none';
+        streamersContainer.style.display = 'block';
+        
+        streamersButton.classList.add('active');
+        chatButton.classList.remove('active');
+      });
 
     // Função para adicionar mensagem no chat
     function addMessage(content, isUser = false) {
