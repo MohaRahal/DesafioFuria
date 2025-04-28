@@ -4,37 +4,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const messageInput = document.getElementById('message-input');
     const sendButton = document.getElementById('send-button');
     const streamersBtn = document.getElementById('streamers-btn');
+    const chatBtn = document.getElementById('chat-btn'); // Novo botão do Chat
     const liveStreamersContainer = document.getElementById('live-streamers-container');
     const streamersList = document.getElementById('streamers-list');
     const chatContainer = document.querySelector('.chat-container');
-    
 
     // Configurações da Twitch API
     const TWITCH_CLIENT_ID = 'irqrpftbthlz0yh483m8908gqk9cxo'; // Substitua pelo seu Client ID
     const TWITCH_CLIENT_SECRET = 'mq19phdohb2hj5jvgnwokec5qechdk'; // Substitua pelo seu Client Secret
 
-    // Lista de streamers da FURIA que você deseja monitorar (apenas nomes de usuário)
+    // Lista de streamers da FURIA que você deseja monitorar
     const FURIA_STREAMERS = [
-        'mount',
-        'Vaxlon', 
-        'IVDmaluco', 
-        'FURIAtv', 
-        'gabssf', 
-        'yuurih', 
-        'kaah', 
-        'guerri',
-        'izaa',
-        'paulanobre',
-        'daaygamer_',
-        'yanxnz_',
-        'MaestroPierre',
-        'MurilloMelloBR',
-        'raf1nhafps',
-        'sofiaespanha',
-        'oManelzin_',
-        'mwzera',
-        'Dezorganizada',
-        'gafallen',
+        'mount', 'Vaxlon', 'IVDmaluco', 'FURIAtv', 'gabssf', 'yuurih', 'kaah', 'guerri',
+        'izaa', 'paulanobre', 'daaygamer_', 'yanxnz_', 'MaestroPierre', 'MurilloMelloBR',
+        'raf1nhafps', 'sofiaespanha', 'oManelzin_', 'mwzera', 'Dezorganizada', 'gafallen',
     ];
 
     // Função para adicionar mensagem no chat
@@ -58,20 +41,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Envia mensagem ao backend e retorna resposta
     async function processMessage(msg) {
-        // indicador typing
         const typing = document.createElement('div');
         typing.className = 'message bot typing';
-        typing.innerHTML = ` 
-          <div class="sender">FURIA Bot</div>
-          <div class="message-content">
-            <div class="typing-indicator"><span></span><span></span><span></span></div>
-          </div>`;
+        typing.innerHTML = `
+            <div class="sender">FURIA Bot</div>
+            <div class="message-content">
+                <div class="typing-indicator"><span></span><span></span><span></span></div>
+            </div>`;
         chatMessages.appendChild(typing);
         chatMessages.scrollTop = chatMessages.scrollHeight;
 
         try {
             const res = await fetch('https://desafiofuria-production.up.railway.app/api/chat', {
-                method: 'POST', headers: {'Content-Type': 'application/json'},
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ message: msg })
             });
             chatMessages.removeChild(typing);
@@ -95,15 +78,16 @@ document.addEventListener('DOMContentLoaded', function() {
         addMessage(reply, false);
     }
 
-    // Eventos
+    // Eventos de envio de mensagem
     sendButton.addEventListener('click', sendMessage);
-    messageInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
+    messageInput.addEventListener('keypress', e => {
+        if (e.key === 'Enter') sendMessage();
+    });
 
     // ===== INTEGRAÇÃO COM API DA TWITCH =====
 
-    // Event listener para o botão de streamers
+    // Botão Streamers Ao Vivo
     streamersBtn.addEventListener('click', function() {
-        // Alterna a visibilidade do container de streamers
         if (liveStreamersContainer.style.display === 'none') {
             liveStreamersContainer.style.display = 'block';
             chatContainer.style.display = 'none';
@@ -114,13 +98,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Novo: Botão Chat
+    chatBtn.addEventListener('click', function() {
+        chatContainer.style.display = 'flex';          // Mostra o chat
+        liveStreamersContainer.style.display = 'none'; // Esconde os streamers
+    });
+
     // Função para obter o token de acesso da Twitch
     async function getTwitchAccessToken() {
         try {
             const response = await fetch(`https://id.twitch.tv/oauth2/token?client_id=${TWITCH_CLIENT_ID}&client_secret=${TWITCH_CLIENT_SECRET}&grant_type=client_credentials`, {
                 method: 'POST'
             });
-            
             const data = await response.json();
             return data.access_token;
         } catch (error) {
@@ -131,34 +120,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Função para verificar quais streamers estão ao vivo
     async function checkLiveStreamers() {
-        // Mostra mensagem de carregamento
         streamersList.innerHTML = '<p>Carregando streamers...</p>';
-        
+
         try {
-            // Obter token de acesso
             const accessToken = await getTwitchAccessToken();
-            
             if (!accessToken) {
                 streamersList.innerHTML = '<p>Erro ao conectar com a Twitch. Tente novamente mais tarde.</p>';
                 return;
             }
-            
-            // Criar string com nomes de usuário para a query
+
             const userLogins = FURIA_STREAMERS.map(streamer => `user_login=${streamer}`).join('&');
-            
-            // Fazer requisição para a API da Twitch
+
             const response = await fetch(`https://api.twitch.tv/helix/streams?${userLogins}`, {
                 headers: {
                     'Client-ID': TWITCH_CLIENT_ID,
                     'Authorization': `Bearer ${accessToken}`
                 }
             });
-            
+
             const data = await response.json();
-            
-            // Processar os resultados
             displayLiveStreamers(data.data);
-            
+
         } catch (error) {
             console.error('Erro ao verificar streamers ao vivo:', error);
             streamersList.innerHTML = '<p>Erro ao buscar informações dos streamers. Tente novamente mais tarde.</p>';
@@ -167,34 +149,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Função para exibir os streamers ao vivo
     function displayLiveStreamers(liveStreams) {
-        // Limpar a lista
         streamersList.innerHTML = '';
-        
+
         if (liveStreams.length === 0) {
             streamersList.innerHTML = '<p>Nenhum streamer da FURIA está ao vivo no momento.</p>';
             return;
         }
-        
-        // Construir a lista de streamers ao vivo
+
         const streamersHeader = document.createElement('h2');
         streamersHeader.textContent = 'Streamers ao vivo:';
         streamersList.appendChild(streamersHeader);
-        
-        // Criar um container para os cards de streamers
+
         const streamersGrid = document.createElement('div');
         streamersGrid.className = 'streamers-grid';
-        
-        // Adicionar cada streamer ao vivo à lista
+
         liveStreams.forEach(stream => {
-            // Criar card para o streamer
             const streamerCard = document.createElement('div');
             streamerCard.className = 'streamer-card';
-            
-            // Thumbnail da stream
+
             const thumbnail = stream.thumbnail_url
                 .replace('{width}', '320')
                 .replace('{height}', '180');
-            
+
             streamerCard.innerHTML = `
                 <div class="streamer-thumbnail">
                     <img src="${thumbnail}" alt="${stream.user_name} stream thumbnail">
@@ -207,10 +183,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     <a href="https://twitch.tv/${stream.user_login}" target="_blank" class="watch-button">Assistir</a>
                 </div>
             `;
-            
+
             streamersGrid.appendChild(streamerCard);
         });
-        
+
         streamersList.appendChild(streamersGrid);
     }
 });
