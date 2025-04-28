@@ -48,11 +48,6 @@ app.post('/api/chat', async (req, res) => {
   chatHistories[sessionId].push({ role: 'user', parts: [{ text: userMessage }] });
 
   try {
-    // Verifica se a mensagem contém "streamer Retalha ao vivo"
-    if (userMessage.toLowerCase().includes('retalha ao vivo')) {
-      const streamStatus = await getStreamersLive();
-      res.json({ message: streamStatus });
-    } else {
       // Lógica padrão do bot Gemini
       const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${apiKey}`;
       const requestBody = {
@@ -70,9 +65,7 @@ app.post('/api/chat', async (req, res) => {
 
       chatHistories[sessionId].push({ role: 'model', parts: [{ text: botReply }] });
       res.json({ message: botReply });
-    }
-
-  } catch (error) {
+    }catch (error) {
     console.error('Erro detalhado:', error.response?.data || error.message);
     res.status(500).json({ message: 'Erro interno no servidor da FURIA.', error: error.message });
   }
