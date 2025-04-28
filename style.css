@@ -21,6 +21,9 @@ body {
   overflow: hidden;
 }
 
+.invert-image {
+  filter: invert(100%);
+}
 .header {
   background-color: var(--furia-dark-gray);
   padding: 12px 20px;
@@ -44,6 +47,7 @@ body {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+
 }
 
 .logo-img img {
