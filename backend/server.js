@@ -1,7 +1,6 @@
 // Importa as bibliotecas necessárias
 const express = require('express');
 const cors = require('cors');
-const axios = require('axios');
 
 // Cria uma instância do aplicativo Express
 const app = express();
