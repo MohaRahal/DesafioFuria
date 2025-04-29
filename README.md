@@ -27,9 +27,6 @@ Este projeto é um chatbot interativo desenvolvido para fãs da **FURIA Esports*
 ```
 DESAFIO-FURIA/
 │
-├── assets/
-│   └── favicon.ico          # Ícone da aba do navegador
-│
 ├── backend/
 │   ├── node_modules/         # Módulos instalados pelo npm
 │   ├── package-lock.json     # Controle das versões exatas dos módulos
