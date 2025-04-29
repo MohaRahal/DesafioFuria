@@ -2,7 +2,6 @@
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
-const cheerio = require('cheerio'); // Adicionado para parsear HTML da Liquipedia
 
 // Cria uma instância do aplicativo Express
 const app = express();
@@ -18,30 +17,6 @@ app.use(express.json());
 
 // Objeto para armazenar o histórico de mensagens para cada sessão
 const chatHistories = {}; // { sessionId: [mensagens anteriores] }
-
-// Função para obter a lineup da FURIA no CS2 a partir da Liquipedia
-async function getFuriaLineupFromLiquipedia() {
-  const url = 'https://liquipedia.net/counterstrike/FURIA';
-
-  try {
-    const { data } = await axios.get(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0' }
-    });
-
-    const $ = cheerio.load(data);
-    const lineup = [];
-
-    $('.fo-nttax-infobox .team-members a').each((i, el) => {
-      const playerName = $(el).text().trim();
-      if (playerName) lineup.push(playerName);
-    });
-
-    return lineup;
-  } catch (error) {
-    console.error('Erro ao buscar lineup:', error.message);
-    return null;
-  }
-}
 
 // Rota principal para o chat
 app.post('/api/chat', async (req, res) => {
@@ -68,19 +43,6 @@ app.post('/api/chat', async (req, res) => {
 
   // Adiciona a mensagem do usuário ao histórico
   chatHistories[sessionId].push({ role: 'user', parts: [{ text: userMessage }] });
-
-  // Verifica se o usuário está perguntando sobre a lineup ou jogadores
-  const keywords = ['line', 'lineup', 'line-up', 'jogadores', 'elenco', 'escalação','time','players'];
-  const lowerMessage = userMessage.toLowerCase();
-
-  if (keywords.some(k => lowerMessage.includes(k))) {
-    const lineup = await getFuriaLineupFromLiquipedia();
-    if (lineup && lineup.length > 0) {
-      const lineupText = `A lineup atual da FURIA no CS2 é:\n\n${lineup.join(', ')}.`;
-      // Injeta essa informação como mensagem anterior no histórico para o Gemini usar como contexto
-      chatHistories[sessionId].push({ role: 'model', parts: [{ text: lineupText }] });
-    }
-  }
 
   try {
     // Faz uma requisição para a API do Gemini com o histórico de mensagens
@@ -114,7 +76,10 @@ app.post('/api/chat', async (req, res) => {
 // Rota para resetar o histórico de uma sessão específica
 app.post('/api/reset', (req, res) => {
   const sessionId = req.body.sessionId || 'default';
+  
+  // Remove o histórico da sessão especificada
   delete chatHistories[sessionId];
+
   res.json({ message: 'Sessão resetada com sucesso.' });
 });
 
