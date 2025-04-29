@@ -1,6 +1,7 @@
 // Importa as bibliotecas necessárias
 const express = require('express');
 const cors = require('cors');
+const axios = require('axios');
 
 // Cria uma instância do aplicativo Express
 const app = express();
@@ -30,10 +31,10 @@ app.post('/api/chat', async (req, res) => {
         role: 'user',
         parts: [
           {
-            text: `Você é um assistente virtual oficial da FURIA Esports.
-                  Seja alegre, brinque com o fã chamando ele de FURIOSO às vezes.
-                  Você é especialista em esports e pode responder sobre o elenco da FURIA em CS2, LoL, Rocket League, Rainbow Six Siege e outros.
-                  Sempre responda de forma divertida e traga informações relevantes sobre a FURIA.`
+            text: `Você é um assistente virtual oficial da FURIA Esports.\n` +
+                  `Seja alegre, brinque com o fã chamando ele de FURIOSO às vezes.\n` +
+                  `Você é especialista em esports e pode responder sobre o elenco da FURIA em CS2, LoL, Rocket League, Rainbow Six Siege e outros.\n` +
+                  `Sempre responda de forma divertida e traga informações relevantes sobre a FURIA.` 
           }
         ]
       }
@@ -48,17 +49,8 @@ app.post('/api/chat', async (req, res) => {
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${apiKey}`;
     const requestBody = {
       contents: chatHistories[sessionId],
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 500,
-        topP: 0.9
-      },
-      safetySettings: [
-        {
-          category: 'HARM_CATEGORY_HARASSMENT',
-          threshold: 'BLOCK_ONLY_HIGH'
-        }
-      ]
+      generationConfig: { temperature: 0.7, maxOutputTokens: 500, topP: 0.9 },
+      safetySettings: [{ category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' }]
     };
 
     const response = await axios.post(apiUrl, requestBody, {
@@ -84,7 +76,7 @@ app.post('/api/chat', async (req, res) => {
 // Rota para resetar o histórico de uma sessão específica
 app.post('/api/reset', (req, res) => {
   const sessionId = req.body.sessionId || 'default';
-
+  
   // Remove o histórico da sessão especificada
   delete chatHistories[sessionId];
 
